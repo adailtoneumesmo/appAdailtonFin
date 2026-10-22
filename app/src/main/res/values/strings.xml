@@ -1,0 +1,61 @@
+<resources>
+    <string name="app_name">Meu Bolso</string>
+
+    <!-- Ações comuns -->
+    <string name="acao_salvar">Salvar</string>
+    <string name="acao_cancelar">Cancelar</string>
+    <string name="acao_excluir">Excluir</string>
+    <string name="acao_voltar">Voltar</string>
+    <string name="acao_ok">OK</string>
+    <string name="acao_limpar">Limpar</string>
+
+    <!-- Rendas: lista -->
+    <string name="rendas_titulo">Rendas</string>
+    <string name="rendas_nova">Nova renda</string>
+    <string name="rendas_vazio_titulo">Nenhuma renda cadastrada</string>
+    <string name="rendas_vazio_descricao">Cadastre seu salário, vale e outras rendas recorrentes para acompanhar seus períodos.</string>
+    <string name="rendas_total_mensal">Total mensal ativo</string>
+    <string name="rendas_inativa">Inativa</string>
+    <string name="rendas_proximo_recebimento">Próximo: %1$s</string>
+    <string name="rendas_sem_proximo">Sem recebimentos futuros</string>
+    <string name="rendas_dia_fixo">Todo dia %1$d</string>
+    <string name="rendas_dia_util">%1$dº dia útil</string>
+
+    <!-- Tipos de renda -->
+    <string name="tipo_renda_salario">Salário</string>
+    <string name="tipo_renda_vale">Vale</string>
+    <string name="tipo_renda_extra">Renda extra</string>
+
+    <!-- Rendas: formulário -->
+    <string name="renda_form_titulo_nova">Nova renda</string>
+    <string name="renda_form_titulo_editar">Editar renda</string>
+    <string name="renda_campo_descricao">Descrição</string>
+    <string name="renda_campo_descricao_dica">Ex.: Salário Cardway</string>
+    <string name="renda_campo_tipo">Tipo</string>
+    <string name="renda_campo_valor">Valor</string>
+    <string name="renda_campo_modo_dia">Recebimento</string>
+    <string name="renda_modo_dia_fixo">Dia do mês</string>
+    <string name="renda_modo_dia_util">Dia útil</string>
+    <string name="renda_campo_dia">Dia do recebimento</string>
+    <string name="renda_campo_dia_util">Qual dia útil (ex.: 5)</string>
+    <string name="renda_campo_ativo">Renda ativa</string>
+    <string name="renda_campo_data_inicio">Data de início</string>
+    <string name="renda_campo_data_fim">Data de fim (opcional)</string>
+    <string name="renda_sem_data_fim">Sem data de fim</string>
+    <string name="renda_previsao">Próximo recebimento previsto: %1$s</string>
+    <string name="renda_previsao_ajustada">Antecipado de %1$s por cair em fim de semana ou feriado.</string>
+    <string name="renda_excluir_titulo">Excluir renda?</string>
+    <string name="renda_excluir_mensagem">\"%1$s\" será removida. Essa ação não pode ser desfeita.</string>
+
+    <!-- Validações -->
+    <string name="erro_campo_obrigatorio">Campo obrigatório</string>
+    <string name="erro_valor_maior_zero">Informe um valor maior que zero</string>
+    <string name="erro_dia_invalido">Informe um dia entre 1 e 31</string>
+    <string name="erro_dia_util_invalido">Informe um dia útil entre 1 e 23</string>
+    <string name="erro_data_fim_antes_inicio">A data de fim deve ser igual ou posterior à data de início</string>
+
+    <!-- Configurações -->
+    <string name="configuracoes_titulo">Configurações</string>
+    <string name="config_antecipar_titulo">Antecipar recebimentos</string>
+    <string name="config_antecipar_descricao">Quando o dia do recebimento cair em fim de semana ou feriado nacional, considerar o dia útil anterior.</string>
+</resources>

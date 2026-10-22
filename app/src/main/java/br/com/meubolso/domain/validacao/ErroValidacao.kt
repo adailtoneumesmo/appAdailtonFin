@@ -1,0 +1,9 @@
+package br.com.meubolso.domain.validacao
+
+enum class ErroValidacao {
+    OBRIGATORIO,
+    VALOR_NAO_POSITIVO,
+    DIA_FORA_DO_INTERVALO,
+    DIA_UTIL_FORA_DO_INTERVALO,
+    DATA_FIM_ANTES_DO_INICIO,
+}

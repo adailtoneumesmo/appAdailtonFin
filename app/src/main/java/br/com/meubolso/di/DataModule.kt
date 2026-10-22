@@ -1,0 +1,41 @@
+package br.com.meubolso.di
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStoreFile
+import androidx.room.Room
+import br.com.meubolso.data.local.MeuBolsoDatabase
+import br.com.meubolso.data.local.renda.RendaDao
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import java.time.Clock
+import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+object DataModule {
+
+    @Provides
+    @Singleton
+    fun provideDatabase(@ApplicationContext context: Context): MeuBolsoDatabase =
+        Room.databaseBuilder(context, MeuBolsoDatabase::class.java, MeuBolsoDatabase.NOME)
+            .addMigrations(*MeuBolsoDatabase.MIGRACOES)
+            .build()
+
+    @Provides
+    fun provideRendaDao(database: MeuBolsoDatabase): RendaDao = database.rendaDao()
+
+    @Provides
+    @Singleton
+    fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
+        PreferenceDataStoreFactory.create { context.preferencesDataStoreFile("configuracoes") }
+
+    @Provides
+    @Singleton
+    fun provideClock(): Clock = Clock.systemDefaultZone()
+}

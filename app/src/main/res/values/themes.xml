@@ -1,0 +1,4 @@
+<resources>
+    <!-- Tema da janela; as cores da interface vêm do MeuBolsoTheme (Compose). -->
+    <style name="Theme.MeuBolso" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

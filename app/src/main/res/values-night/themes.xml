@@ -1,0 +1,3 @@
+<resources>
+    <style name="Theme.MeuBolso" parent="android:Theme.Material.NoActionBar" />
+</resources>
