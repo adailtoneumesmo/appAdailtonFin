@@ -27,6 +27,7 @@ import androidx.navigation.navArgument
 import br.com.meubolso.R
 import br.com.meubolso.ui.categorias.CategoriasScreen
 import br.com.meubolso.ui.configuracoes.ConfiguracoesScreen
+import br.com.meubolso.ui.dashboard.DashboardScreen
 import br.com.meubolso.ui.despesas.DespesaFormScreen
 import br.com.meubolso.ui.despesas.DespesasScreen
 import br.com.meubolso.ui.rendas.RendaFormScreen
@@ -36,6 +37,7 @@ object Rotas {
     const val ARG_ID = "id"
     private const val SEM_ID = -1L
 
+    const val DASHBOARD = "dashboard"
     const val DESPESAS = "despesas"
     const val DESPESA_FORM = "despesas/form?$ARG_ID={$ARG_ID}"
     const val CATEGORIAS = "categorias"
@@ -55,6 +57,7 @@ object Rotas {
 
 /** Destinos da barra de navegação inferior. */
 enum class Aba(val rota: String, @StringRes val rotulo: Int, @DrawableRes val icone: Int) {
+    INICIO(Rotas.DASHBOARD, R.string.aba_inicio, R.drawable.ic_aba_inicio),
     DESPESAS(Rotas.DESPESAS, R.string.aba_despesas, R.drawable.ic_aba_despesas),
     RENDAS(Rotas.RENDAS, R.string.aba_rendas, R.drawable.ic_aba_rendas),
     CONFIGURACOES(Rotas.CONFIGURACOES, R.string.aba_configuracoes, R.drawable.ic_aba_configuracoes),
@@ -87,11 +90,17 @@ fun MeuBolsoNavHost() {
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = Rotas.DESPESAS,
+            startDestination = Rotas.DASHBOARD,
             modifier = Modifier
                 .padding(padding)
                 .consumeWindowInsets(padding),
         ) {
+            composable(Rotas.DASHBOARD) {
+                DashboardScreen(
+                    onNovaRenda = { navController.navigate(Rotas.rendaForm()) },
+                    onNovaDespesa = { navController.navigate(Rotas.despesaForm()) },
+                )
+            }
             composable(Rotas.DESPESAS) {
                 DespesasScreen(
                     onNovaDespesa = { navController.navigate(Rotas.despesaForm()) },

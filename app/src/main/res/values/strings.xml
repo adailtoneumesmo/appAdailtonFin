@@ -61,7 +61,32 @@
     <string name="config_antecipar_titulo">Antecipar recebimentos</string>
     <string name="config_antecipar_descricao">Quando o dia do recebimento cair em fim de semana ou feriado nacional, considerar o dia útil anterior.</string>
 
+    <!-- Dashboard -->
+    <string name="dashboard_resumo_geral">Resumo geral</string>
+    <string name="dashboard_total_receitas">Total de receitas</string>
+    <string name="dashboard_total_despesas">Total de despesas</string>
+    <string name="dashboard_saldo_geral">Saldo geral</string>
+    <string name="dashboard_salario">Salário</string>
+    <string name="dashboard_vale">Vale</string>
+    <string name="dashboard_renda">Renda</string>
+    <string name="dashboard_despesa">Despesa</string>
+    <string name="dashboard_despesas">Despesas</string>
+    <string name="dashboard_saldo">Saldo</string>
+    <string name="dashboard_saldo_positivo">Saldo positivo</string>
+    <string name="dashboard_saldo_negativo">Saldo negativo</string>
+    <string name="dashboard_saldo_zerado">Saldo zerado</string>
+    <string name="dashboard_consumo">%1$d%% da renda consumida</string>
+    <string name="dashboard_consumo_sem_renda">Despesas sem renda neste mês</string>
+    <string name="dashboard_inclui_renda_extra">Inclui %1$s de renda extra</string>
+    <string name="dashboard_grafico_titulo">Renda x Despesa</string>
+    <string name="dashboard_grafico_dica">Toque em uma barra para ver o valor</string>
+    <string name="dashboard_vazio_titulo">Nenhum lançamento neste mês</string>
+    <string name="dashboard_vazio_descricao">Cadastre suas rendas e despesas para ver o resumo do mês.</string>
+    <string name="dashboard_adicionar_renda">Renda</string>
+    <string name="dashboard_adicionar_despesa">Despesa</string>
+
     <!-- Navegação -->
+    <string name="aba_inicio">Início</string>
     <string name="aba_despesas">Despesas</string>
     <string name="aba_rendas">Rendas</string>
     <string name="aba_configuracoes">Configurações</string>

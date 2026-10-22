@@ -1,0 +1,188 @@
+package br.com.meubolso.domain.dashboard
+
+import br.com.meubolso.domain.calendario.CalendarioDiasUteis
+import br.com.meubolso.domain.despesa.CalculadoraOcorrencias
+import br.com.meubolso.domain.model.DespesaFixa
+import br.com.meubolso.domain.model.FormaPagamento
+import br.com.meubolso.domain.model.ModoDiaRecebimento
+import br.com.meubolso.domain.model.PagamentoDespesa
+import br.com.meubolso.domain.model.Renda
+import br.com.meubolso.domain.model.TipoRenda
+import br.com.meubolso.domain.model.VinculoPeriodo
+import br.com.meubolso.domain.renda.CalculadoraRecebimento
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import java.time.LocalDate
+import java.time.YearMonth
+
+class CalculadoraDashboardTest {
+
+    private val calculadora = CalculadoraDashboard(
+        CalculadoraRecebimento(CalendarioDiasUteis()),
+        CalculadoraOcorrencias(),
+    )
+
+    private val outubro = YearMonth.of(2026, 10)
+
+    private fun renda(
+        id: Long,
+        tipo: TipoRenda,
+        valor: Long,
+        dia: Int,
+        ativo: Boolean = true,
+        inicio: LocalDate = LocalDate.of(2026, 1, 1),
+    ) = Renda(
+        id = id,
+        descricao = "Renda $id",
+        tipo = tipo,
+        valorCentavos = valor,
+        modoDia = ModoDiaRecebimento.DIA_FIXO,
+        dia = dia,
+        ativo = ativo,
+        dataInicio = inicio,
+    )
+
+    private fun despesa(
+        id: Long,
+        valor: Long,
+        dia: Int = 10,
+        vinculo: VinculoPeriodo = VinculoPeriodo.SALARIO,
+        inicio: YearMonth = YearMonth.of(2026, 1),
+    ) = DespesaFixa(
+        id = id,
+        descricao = "Despesa $id",
+        categoriaId = 1,
+        valorCentavos = valor,
+        diaVencimento = dia,
+        formaPagamento = FormaPagamento.PIX,
+        vinculo = vinculo,
+        mesInicio = inicio,
+    )
+
+    private fun resumir(
+        rendas: List<Renda> = emptyList(),
+        despesas: List<DespesaFixa> = emptyList(),
+        pagamentos: List<PagamentoDespesa> = emptyList(),
+        mes: YearMonth = outubro,
+    ) = calculadora.resumir(rendas, despesas, pagamentos, mes, anteciparDiaNaoUtil = false)
+
+    @Test
+    fun `saldo positivo quando renda supera despesa`() {
+        val resumo = resumir(
+            rendas = listOf(renda(1, TipoRenda.SALARIO, 500_000, dia = 5)),
+            despesas = listOf(despesa(1, 200_000)),
+        )
+        assertEquals(300_000, resumo.salario.saldoCentavos)
+        assertEquals(SituacaoSaldo.POSITIVO, resumo.salario.situacao)
+        assertEquals(SituacaoSaldo.POSITIVO, resumo.geral.situacao)
+    }
+
+    @Test
+    fun `saldo negativo quando despesa supera renda`() {
+        val resumo = resumir(
+            rendas = listOf(renda(1, TipoRenda.VALE, 80_000, dia = 20)),
+            despesas = listOf(despesa(1, 100_000, vinculo = VinculoPeriodo.VALE)),
+        )
+        assertEquals(-20_000, resumo.vale.saldoCentavos)
+        assertEquals(SituacaoSaldo.NEGATIVO, resumo.vale.situacao)
+        assertEquals(SituacaoSaldo.NEGATIVO, resumo.geral.situacao)
+    }
+
+    @Test
+    fun `saldo zerado quando renda e despesa se igualam`() {
+        val resumo = resumir(
+            rendas = listOf(renda(1, TipoRenda.SALARIO, 150_000, dia = 5)),
+            despesas = listOf(despesa(1, 100_000), despesa(2, 50_000)),
+        )
+        assertEquals(0, resumo.salario.saldoCentavos)
+        assertEquals(SituacaoSaldo.ZERADO, resumo.salario.situacao)
+    }
+
+    @Test
+    fun `mes sem lancamentos fica zerado e sinalizado`() {
+        val resumo = resumir(
+            rendas = listOf(renda(1, TipoRenda.SALARIO, 500_000, dia = 5, inicio = LocalDate.of(2026, 11, 1))),
+            despesas = listOf(despesa(1, 100_000, inicio = YearMonth.of(2026, 11))),
+        )
+        assertFalse(resumo.possuiLancamentos)
+        assertEquals(Balanco(), resumo.geral)
+        assertEquals(SituacaoSaldo.ZERADO, resumo.geral.situacao)
+        assertEquals(FaixaConsumo.NORMAL, resumo.geral.faixaConsumo)
+    }
+
+    @Test
+    fun `separa salario e vale e soma os dois no resumo geral`() {
+        val resumo = resumir(
+            rendas = listOf(
+                renda(1, TipoRenda.SALARIO, 500_000, dia = 5),
+                renda(2, TipoRenda.VALE, 100_000, dia = 20),
+            ),
+            despesas = listOf(
+                despesa(1, 300_000, vinculo = VinculoPeriodo.SALARIO),
+                despesa(2, 40_000, vinculo = VinculoPeriodo.VALE),
+                despesa(3, 70_000, vinculo = VinculoPeriodo.VALE),
+            ),
+        )
+        assertTrue(resumo.possuiLancamentos)
+        assertEquals(Balanco(500_000, 300_000), resumo.salario)
+        assertEquals(Balanco(100_000, 110_000), resumo.vale)
+        assertEquals(Balanco(600_000, 410_000), resumo.geral)
+        assertEquals(190_000, resumo.geral.saldoCentavos)
+    }
+
+    @Test
+    fun `vinculo automatico usa o periodo do ultimo recebimento antes do vencimento`() {
+        val rendas = listOf(
+            renda(1, TipoRenda.SALARIO, 500_000, dia = 5),
+            renda(2, TipoRenda.VALE, 100_000, dia = 20),
+        )
+        val resumo = resumir(
+            rendas = rendas,
+            despesas = listOf(
+                // 10/10: período do salário (5/10)
+                despesa(1, 1_000, dia = 10, vinculo = VinculoPeriodo.AUTOMATICO),
+                // 25/10: período do vale (20/10)
+                despesa(2, 2_000, dia = 25, vinculo = VinculoPeriodo.AUTOMATICO),
+                // 02/10: ainda no período do vale de 20/09
+                despesa(3, 4_000, dia = 2, vinculo = VinculoPeriodo.AUTOMATICO),
+                // 20/10: vence no dia em que o vale cai
+                despesa(4, 8_000, dia = 20, vinculo = VinculoPeriodo.AUTOMATICO),
+            ),
+        )
+        assertEquals(1_000, resumo.salario.despesaCentavos)
+        assertEquals(14_000, resumo.vale.despesaCentavos)
+    }
+
+    @Test
+    fun `vinculo automatico sem rendas cadastradas vai para o salario`() {
+        val resumo = resumir(despesas = listOf(despesa(1, 5_000, vinculo = VinculoPeriodo.AUTOMATICO)))
+        assertEquals(Balanco(0, 5_000), resumo.salario)
+        assertEquals(Balanco(), resumo.vale)
+    }
+
+    @Test
+    fun `renda extra entra no salario e renda inativa e ignorada`() {
+        val resumo = resumir(
+            rendas = listOf(
+                renda(1, TipoRenda.SALARIO, 500_000, dia = 5),
+                renda(2, TipoRenda.RENDA_EXTRA, 30_000, dia = 15),
+                renda(3, TipoRenda.VALE, 100_000, dia = 20, ativo = false),
+            ),
+        )
+        assertEquals(530_000, resumo.salario.rendaCentavos)
+        assertEquals(30_000, resumo.rendaExtraCentavos)
+        assertEquals(0, resumo.vale.rendaCentavos)
+    }
+
+    @Test
+    fun `faixa de consumo verde ate 70, amarela ate 100 e vermelha acima`() {
+        assertEquals(FaixaConsumo.NORMAL, Balanco(100_00, 70_00).faixaConsumo)
+        assertEquals(FaixaConsumo.ALERTA, Balanco(100_00, 70_01).faixaConsumo)
+        assertEquals(FaixaConsumo.ALERTA, Balanco(100_00, 100_00).faixaConsumo)
+        assertEquals(FaixaConsumo.EXCEDIDO, Balanco(100_00, 100_01).faixaConsumo)
+        assertEquals(FaixaConsumo.EXCEDIDO, Balanco(0, 1).faixaConsumo)
+        assertEquals(0.5, Balanco(100_00, 50_00).fracaoConsumida, 0.0)
+    }
+}
