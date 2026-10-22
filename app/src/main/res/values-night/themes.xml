@@ -1,6 +1,4 @@
 <resources>
     <style name="Theme.MeuBolso" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowSplashScreenBackground">@color/marca_verde</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
     </style>
 </resources>

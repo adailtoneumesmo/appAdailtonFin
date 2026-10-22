@@ -14,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "br.com.meubolso"
-        minSdk = 35
+        minSdk = 26
         targetSdk = 37
         versionCode = 2
         versionName = "1.1"
