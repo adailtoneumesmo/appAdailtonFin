@@ -53,9 +53,87 @@
     <string name="erro_dia_invalido">Informe um dia entre 1 e 31</string>
     <string name="erro_dia_util_invalido">Informe um dia útil entre 1 e 23</string>
     <string name="erro_data_fim_antes_inicio">A data de fim deve ser igual ou posterior à data de início</string>
+    <string name="erro_parcelas_invalidas">Informe entre 2 e 360 parcelas</string>
+    <string name="erro_nome_duplicado">Já existe uma categoria com esse nome</string>
 
     <!-- Configurações -->
     <string name="configuracoes_titulo">Configurações</string>
     <string name="config_antecipar_titulo">Antecipar recebimentos</string>
     <string name="config_antecipar_descricao">Quando o dia do recebimento cair em fim de semana ou feriado nacional, considerar o dia útil anterior.</string>
+
+    <!-- Navegação -->
+    <string name="aba_despesas">Despesas</string>
+    <string name="aba_rendas">Rendas</string>
+    <string name="aba_configuracoes">Configurações</string>
+
+    <!-- Seletor de mês -->
+    <string name="mes_anterior">Mês anterior</string>
+    <string name="mes_proximo">Próximo mês</string>
+
+    <!-- Despesas: lista -->
+    <string name="despesas_titulo">Despesas fixas</string>
+    <string name="despesas_nova">Nova despesa</string>
+    <string name="despesas_vazio_titulo">Nenhuma despesa cadastrada</string>
+    <string name="despesas_vazio_descricao">Cadastre aluguel, contas, assinaturas e parcelas para acompanhar o que já foi pago no mês.</string>
+    <string name="despesas_mes_vazio">Nenhuma despesa para este mês.</string>
+    <string name="despesas_total_mes">Total do mês</string>
+    <string name="despesas_pago">Pago</string>
+    <string name="despesas_pendente">Pendente</string>
+    <string name="despesas_paga_em">Paga em %1$s</string>
+    <string name="despesas_vence_em">Vence em %1$s</string>
+    <string name="despesas_vencida_em">Vencida em %1$s</string>
+    <string name="despesas_parcela">Parcela %1$d/%2$d</string>
+    <string name="despesas_status_paga">Paga</string>
+    <string name="despesas_status_pendente">Pendente</string>
+    <string name="despesas_fora_do_mes">Sem cobrança neste mês</string>
+    <string name="despesas_motivo_inativa">Inativa</string>
+    <string name="despesas_motivo_encerrada">Parcelamento encerrado</string>
+    <string name="despesas_motivo_inicia_em">Começa em %1$s</string>
+
+    <!-- Despesas: formulário -->
+    <string name="despesa_form_titulo_nova">Nova despesa</string>
+    <string name="despesa_form_titulo_editar">Editar despesa</string>
+    <string name="despesa_campo_descricao">Descrição</string>
+    <string name="despesa_campo_descricao_dica">Ex.: Aluguel</string>
+    <string name="despesa_campo_categoria">Categoria</string>
+    <string name="despesa_gerenciar_categorias">Gerenciar categorias…</string>
+    <string name="despesa_campo_valor">Valor</string>
+    <string name="despesa_campo_dia">Dia de vencimento</string>
+    <string name="despesa_campo_dia_ajuda">Em meses mais curtos, vence no último dia do mês.</string>
+    <string name="despesa_campo_forma">Forma de pagamento</string>
+    <string name="despesa_campo_vinculo">Pagar com</string>
+    <string name="despesa_vinculo_ajuda">Automático: usa o período (salário ou vale) em que o vencimento cai.</string>
+    <string name="despesa_campo_recorrencia">Recorrência</string>
+    <string name="despesa_campo_parcelas">Número de parcelas</string>
+    <string name="despesa_campo_mes_inicio">Primeira cobrança</string>
+    <string name="despesa_campo_mes_inicio_parcelada">Mês da 1ª parcela</string>
+    <string name="despesa_campo_ativa">Despesa ativa</string>
+    <string name="despesa_excluir_titulo">Excluir despesa?</string>
+    <string name="despesa_excluir_mensagem">\"%1$s\" e todo o histórico de pagamentos serão removidos. Para manter o histórico, desative a despesa.</string>
+
+    <string name="forma_pix">Pix</string>
+    <string name="forma_boleto">Boleto</string>
+    <string name="forma_debito_automatico">Débito automático</string>
+    <string name="forma_cartao_credito">Cartão de crédito</string>
+    <string name="vinculo_automatico">Automático</string>
+    <string name="vinculo_salario">Salário</string>
+    <string name="vinculo_vale">Vale</string>
+    <string name="recorrencia_mensal">Mensal</string>
+    <string name="recorrencia_parcelada">Parcelada</string>
+
+    <!-- Categorias -->
+    <string name="categorias_titulo">Categorias</string>
+    <string name="categorias_nova">Nova categoria</string>
+    <string name="categorias_editar">Editar categoria</string>
+    <string name="categorias_padrao">Padrão</string>
+    <string name="categorias_personalizada">Personalizada</string>
+    <string name="categorias_campo_nome">Nome</string>
+    <string name="categorias_campo_cor">Cor</string>
+    <string name="categorias_cor_selecionada">Cor selecionada</string>
+    <plurals name="categorias_em_uso">
+        <item quantity="one">Não é possível excluir: %1$d despesa usa esta categoria.</item>
+        <item quantity="other">Não é possível excluir: %1$d despesas usam esta categoria.</item>
+    </plurals>
+    <string name="config_categorias_titulo">Categorias de despesa</string>
+    <string name="config_categorias_descricao">Crie, edite ou exclua categorias personalizadas.</string>
 </resources>

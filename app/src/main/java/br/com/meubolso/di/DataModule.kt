@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import br.com.meubolso.data.local.MeuBolsoDatabase
+import br.com.meubolso.data.local.categoria.CategoriaDao
+import br.com.meubolso.data.local.despesa.DespesaDao
 import br.com.meubolso.data.local.renda.RendaDao
 import dagger.Module
 import dagger.Provides
@@ -25,10 +27,17 @@ object DataModule {
     fun provideDatabase(@ApplicationContext context: Context): MeuBolsoDatabase =
         Room.databaseBuilder(context, MeuBolsoDatabase::class.java, MeuBolsoDatabase.NOME)
             .addMigrations(*MeuBolsoDatabase.MIGRACOES)
+            .addCallback(MeuBolsoDatabase.AoCriar)
             .build()
 
     @Provides
     fun provideRendaDao(database: MeuBolsoDatabase): RendaDao = database.rendaDao()
+
+    @Provides
+    fun provideCategoriaDao(database: MeuBolsoDatabase): CategoriaDao = database.categoriaDao()
+
+    @Provides
+    fun provideDespesaDao(database: MeuBolsoDatabase): DespesaDao = database.despesaDao()
 
     @Provides
     @Singleton

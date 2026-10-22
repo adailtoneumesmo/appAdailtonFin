@@ -3,6 +3,7 @@ package br.com.meubolso.util
 import java.math.BigDecimal
 import java.text.NumberFormat
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -12,9 +13,16 @@ object Formatadores {
 
     private val formatoData = DateTimeFormatter.ofPattern("dd/MM/yyyy", LOCALE_BR)
 
+    /** "LLLL" = nome do mês na forma isolada ("outubro", não "de outubro"). */
+    private val formatoMesAno = DateTimeFormatter.ofPattern("LLLL yyyy", LOCALE_BR)
+
     /** 123456 → "R$ 1.234,56". NumberFormat não é thread-safe, por isso uma instância por chamada. */
     fun moeda(centavos: Long): String =
         NumberFormat.getCurrencyInstance(LOCALE_BR).format(BigDecimal.valueOf(centavos, 2))
 
     fun data(data: LocalDate): String = formatoData.format(data)
+
+    /** 2026-10 → "Outubro 2026". */
+    fun mesAno(mes: YearMonth): String =
+        formatoMesAno.format(mes).replaceFirstChar { it.titlecase(LOCALE_BR) }
 }

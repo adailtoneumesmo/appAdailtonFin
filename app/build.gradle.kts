@@ -16,8 +16,8 @@ android {
         applicationId = "br.com.meubolso"
         minSdk = 35
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -68,6 +68,14 @@ dependencies {
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
 
     implementation(libs.androidx.datastore.preferences)
+
+    constraints {
+        // room-migration (usado pelo room-testing) foi compilado com serialization 1.8.1;
+        // o app resolvia 1.7.3 e o APK de teste herdava essa versão (AbstractMethodError).
+        implementation(libs.kotlinx.serialization.json) {
+            because("Alinhar com a versão exigida pelo Room 2.8.5")
+        }
+    }
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
