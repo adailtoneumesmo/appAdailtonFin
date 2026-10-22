@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import br.com.meubolso.R
 import br.com.meubolso.domain.model.ModoDiaRecebimento
 import br.com.meubolso.domain.model.Renda
+import br.com.meubolso.ui.components.LogoMeuBolso
 import br.com.meubolso.ui.components.rotulo
 import br.com.meubolso.util.Formatadores
 
@@ -154,6 +155,7 @@ private fun EstadoVazio(modifier: Modifier = Modifier) {
             .fillMaxSize()
             .padding(32.dp),
     ) {
+        LogoMeuBolso(altura = 40.dp, modifier = Modifier.padding(bottom = 24.dp))
         Text(
             stringResource(R.string.rendas_vazio_titulo),
             style = MaterialTheme.typography.titleLarge,

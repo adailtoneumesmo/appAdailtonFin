@@ -1,4 +1,7 @@
 <resources>
     <!-- Tema da janela; as cores da interface vêm do MeuBolsoTheme (Compose). -->
-    <style name="Theme.MeuBolso" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.MeuBolso" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowSplashScreenBackground">@color/marca_verde</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+    </style>
 </resources>
