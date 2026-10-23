@@ -49,4 +49,40 @@ class MigracoesTest {
         }
         db.close()
     }
+
+    @Test
+    fun migracao2Para3_preservaDespesasECriaTabelasDeCartao() {
+        helper.createDatabase(nomeBanco, 2).use { db ->
+            CategoriasPadrao.inserir(db)
+            db.execSQL(
+                """
+                INSERT INTO despesas_fixas (descricao, categoria_id, valor_centavos, dia_vencimento, forma_pagamento,
+                    vinculo, recorrencia, total_parcelas, mes_inicio, ativa)
+                VALUES ('Aluguel', 1, 150000, 5, 'BOLETO', 'SALARIO', 'MENSAL', NULL, '2026-01', 1)
+                """.trimIndent(),
+            )
+        }
+
+        // Valida o esquema resultante contra app/schemas/.../3.json
+        val db = helper.runMigrationsAndValidate(nomeBanco, 3, true, *MeuBolsoDatabase.MIGRACOES)
+
+        db.query("SELECT descricao FROM despesas_fixas").use { cursor ->
+            assertEquals(1, cursor.count)
+            cursor.moveToFirst()
+            assertEquals("Aluguel", cursor.getString(0))
+        }
+        db.execSQL("INSERT INTO cartoes (nome, dia_fechamento, dia_vencimento, fonte) VALUES ('Nubank', 10, 17, 'VALE')")
+        db.execSQL(
+            """
+            INSERT INTO compras_cartao (cartao_id, descricao, categoria_id, valor_centavos, data_compra, modalidade,
+                total_parcelas, mes_primeira_fatura, mes_ultima_fatura)
+            VALUES (1, 'Notebook', 1, 500000, '2026-03-05', 'PARCELADO', 5, '2026-03', NULL)
+            """.trimIndent(),
+        )
+        db.query("SELECT COUNT(*) FROM compras_cartao").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(1, cursor.getInt(0))
+        }
+        db.close()
+    }
 }

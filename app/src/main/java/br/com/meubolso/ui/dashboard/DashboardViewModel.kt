@@ -2,6 +2,7 @@ package br.com.meubolso.ui.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.meubolso.data.repository.CartaoRepository
 import br.com.meubolso.data.repository.ConfiguracoesRepository
 import br.com.meubolso.data.repository.DespesaRepository
 import br.com.meubolso.data.repository.RendaRepository
@@ -30,6 +31,7 @@ data class DashboardUiState(
 class DashboardViewModel @Inject constructor(
     rendaRepository: RendaRepository,
     despesaRepository: DespesaRepository,
+    cartaoRepository: CartaoRepository,
     configuracoesRepository: ConfiguracoesRepository,
     private val calculadora: CalculadoraDashboard,
     clock: Clock,
@@ -43,12 +45,18 @@ class DashboardViewModel @Inject constructor(
         rendaRepository.observarRendas(),
         despesaRepository.observarDespesas(),
         mes.flatMapLatest { despesaRepository.observarPagamentos(it) },
-        configuracoesRepository.anteciparDiaNaoUtil,
-    ) { mes, rendas, despesas, pagamentos, antecipar ->
+        // combine aceita no máximo 5 Flows tipados; os demais vão agrupados.
+        combine(
+            configuracoesRepository.anteciparDiaNaoUtil,
+            cartaoRepository.observarCartoes(),
+            cartaoRepository.observarCompras(),
+            ::Triple,
+        ),
+    ) { mes, rendas, despesas, pagamentos, (antecipar, cartoes, compras) ->
         DashboardUiState(
             carregando = false,
             mes = mes,
-            resumo = calculadora.resumir(rendas, despesas, pagamentos, mes, antecipar),
+            resumo = calculadora.resumir(rendas, despesas, pagamentos, mes, antecipar, cartoes, compras),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState(mes = mes.value))
 

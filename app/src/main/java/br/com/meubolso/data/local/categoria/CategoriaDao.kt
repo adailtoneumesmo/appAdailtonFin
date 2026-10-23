@@ -17,6 +17,12 @@ interface CategoriaDao {
     @Query("DELETE FROM categorias WHERE id = :id AND padrao = 0")
     suspend fun excluir(id: Long)
 
-    @Query("SELECT COUNT(*) FROM despesas_fixas WHERE categoria_id = :id")
+    /** Despesas fixas e compras de cartão que usam a categoria. */
+    @Query(
+        """
+        SELECT (SELECT COUNT(*) FROM despesas_fixas WHERE categoria_id = :id)
+             + (SELECT COUNT(*) FROM compras_cartao WHERE categoria_id = :id)
+        """,
+    )
     suspend fun contarDespesas(id: Long): Int
 }

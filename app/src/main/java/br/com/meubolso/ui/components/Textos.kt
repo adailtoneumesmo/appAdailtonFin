@@ -3,6 +3,8 @@ package br.com.meubolso.ui.components
 import androidx.annotation.StringRes
 import br.com.meubolso.R
 import br.com.meubolso.domain.model.FormaPagamento
+import br.com.meubolso.domain.model.ModalidadeCompra
+import br.com.meubolso.domain.model.Origem
 import br.com.meubolso.domain.model.Recorrencia
 import br.com.meubolso.domain.model.TipoRenda
 import br.com.meubolso.domain.model.VinculoPeriodo
@@ -18,6 +20,7 @@ val ErroValidacao.mensagem: Int
         ErroValidacao.DATA_FIM_ANTES_DO_INICIO -> R.string.erro_data_fim_antes_inicio
         ErroValidacao.PARCELAS_FORA_DO_INTERVALO -> R.string.erro_parcelas_invalidas
         ErroValidacao.NOME_DUPLICADO -> R.string.erro_nome_duplicado
+        ErroValidacao.VALOR_MENOR_QUE_PARCELAS -> R.string.erro_valor_menor_que_parcelas
     }
 
 @get:StringRes
@@ -50,4 +53,19 @@ val Recorrencia.rotulo: Int
     get() = when (this) {
         Recorrencia.MENSAL -> R.string.recorrencia_mensal
         Recorrencia.PARCELADA -> R.string.recorrencia_parcelada
+    }
+
+@get:StringRes
+val ModalidadeCompra.rotulo: Int
+    get() = when (this) {
+        ModalidadeCompra.A_VISTA -> R.string.modalidade_a_vista
+        ModalidadeCompra.PARCELADO -> R.string.modalidade_parcelado
+        ModalidadeCompra.FIXO -> R.string.modalidade_fixo
+    }
+
+@get:StringRes
+val Origem.rotulo: Int
+    get() = when (this) {
+        Origem.VALE -> R.string.origem_vale
+        Origem.SALARIO -> R.string.origem_salario
     }

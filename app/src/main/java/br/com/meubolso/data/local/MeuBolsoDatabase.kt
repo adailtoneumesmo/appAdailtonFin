@@ -7,6 +7,9 @@ import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import br.com.meubolso.data.local.cartao.CartaoDao
+import br.com.meubolso.data.local.cartao.CartaoEntity
+import br.com.meubolso.data.local.cartao.CompraCartaoEntity
 import br.com.meubolso.data.local.categoria.CategoriaDao
 import br.com.meubolso.data.local.categoria.CategoriaEntity
 import br.com.meubolso.data.local.categoria.CategoriasPadrao
@@ -23,6 +26,7 @@ import br.com.meubolso.data.local.renda.RendaEntity
  * Histórico:
  * - v1: rendas
  * - v2: categorias (com as padrão), despesas_fixas e pagamentos_despesa
+ * - v3: cartoes e compras_cartao
  */
 @Database(
     entities = [
@@ -30,11 +34,14 @@ import br.com.meubolso.data.local.renda.RendaEntity
         CategoriaEntity::class,
         DespesaFixaEntity::class,
         PagamentoDespesaEntity::class,
+        CartaoEntity::class,
+        CompraCartaoEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2, spec = MeuBolsoDatabase.Migracao1Para2::class),
+        AutoMigration(from = 2, to = 3),
     ],
 )
 @TypeConverters(Conversores::class)
@@ -45,6 +52,8 @@ abstract class MeuBolsoDatabase : RoomDatabase() {
     abstract fun categoriaDao(): CategoriaDao
 
     abstract fun despesaDao(): DespesaDao
+
+    abstract fun cartaoDao(): CartaoDao
 
     /** Tabelas novas são criadas pelo Room; aqui só populamos as categorias padrão. */
     class Migracao1Para2 : AutoMigrationSpec {

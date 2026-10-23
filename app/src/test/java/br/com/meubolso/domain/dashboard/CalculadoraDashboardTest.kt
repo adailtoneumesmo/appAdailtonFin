@@ -1,10 +1,15 @@
 package br.com.meubolso.domain.dashboard
 
 import br.com.meubolso.domain.calendario.CalendarioDiasUteis
+import br.com.meubolso.domain.cartao.CalculadoraFatura
 import br.com.meubolso.domain.despesa.CalculadoraOcorrencias
+import br.com.meubolso.domain.model.Cartao
+import br.com.meubolso.domain.model.CompraCartao
 import br.com.meubolso.domain.model.DespesaFixa
 import br.com.meubolso.domain.model.FormaPagamento
+import br.com.meubolso.domain.model.ModalidadeCompra
 import br.com.meubolso.domain.model.ModoDiaRecebimento
+import br.com.meubolso.domain.model.Origem
 import br.com.meubolso.domain.model.PagamentoDespesa
 import br.com.meubolso.domain.model.Renda
 import br.com.meubolso.domain.model.TipoRenda
@@ -22,6 +27,7 @@ class CalculadoraDashboardTest {
     private val calculadora = CalculadoraDashboard(
         CalculadoraRecebimento(CalendarioDiasUteis()),
         CalculadoraOcorrencias(),
+        CalculadoraFatura(),
     )
 
     private val outubro = YearMonth.of(2026, 10)
@@ -184,5 +190,69 @@ class CalculadoraDashboardTest {
         assertEquals(FaixaConsumo.EXCEDIDO, Balanco(100_00, 100_01).faixaConsumo)
         assertEquals(FaixaConsumo.EXCEDIDO, Balanco(0, 1).faixaConsumo)
         assertEquals(0.5, Balanco(100_00, 50_00).fracaoConsumida, 0.0)
+    }
+
+    // Faturas de cartão
+
+    private val calculadoraFatura = CalculadoraFatura()
+
+    private fun cartao(id: Long, fonte: Origem, fechamento: Int = 10, vencimento: Int = 17) =
+        Cartao(id = id, nome = "Cartão $id", diaFechamento = fechamento, diaVencimento = vencimento, fonte = fonte)
+
+    private fun compra(cartao: Cartao, valor: Long, data: LocalDate, parcelas: Int? = null, id: Long = 1) = CompraCartao(
+        id = id,
+        cartaoId = cartao.id,
+        descricao = "Compra $id",
+        categoriaId = 1,
+        valorCentavos = valor,
+        dataCompra = data,
+        modalidade = if (parcelas == null) ModalidadeCompra.A_VISTA else ModalidadeCompra.PARCELADO,
+        totalParcelas = parcelas,
+        mesPrimeiraFatura = calculadoraFatura.faturaDaCompra(cartao, data),
+    )
+
+    @Test
+    fun `fatura entra como despesa da fonte do cartao no mes do vencimento`() {
+        val aline = cartao(1, Origem.VALE)
+        val resumo = calculadora.resumir(
+            rendas = listOf(renda(1, TipoRenda.VALE, 100_000, dia = 15)),
+            despesas = emptyList(),
+            pagamentos = emptyList(),
+            mes = outubro,
+            anteciparDiaNaoUtil = false,
+            cartoes = listOf(aline),
+            compras = listOf(compra(aline, 80_000, LocalDate.of(2026, 10, 8), parcelas = 8)),
+        )
+        assertEquals(10_000L, resumo.vale.despesaCentavos)
+        assertEquals(0L, resumo.salario.despesaCentavos)
+        assertEquals(1, resumo.detalheVale.faturas.size)
+        assertEquals(LocalDate.of(2026, 10, 17), resumo.detalheVale.faturas.single().vencimento)
+    }
+
+    @Test
+    fun `fatura que vence no mes seguinte conta no mes do vencimento`() {
+        // Fecha dia 28 e vence dia 5: a fatura de outubro vence em 05/11.
+        val c = cartao(1, Origem.SALARIO, fechamento = 28, vencimento = 5)
+        val compras = listOf(compra(c, 30_000, LocalDate.of(2026, 10, 8)))
+        fun resumoDe(mes: YearMonth) = calculadora.resumir(
+            emptyList(), emptyList(), emptyList(), mes, false, cartoes = listOf(c), compras = compras,
+        )
+        assertEquals(0L, resumoDe(outubro).salario.despesaCentavos)
+        assertFalse(resumoDe(outubro).possuiLancamentos)
+        assertEquals(30_000L, resumoDe(YearMonth.of(2026, 11)).salario.despesaCentavos)
+        assertTrue(resumoDe(YearMonth.of(2026, 11)).possuiLancamentos)
+    }
+
+    @Test
+    fun `detalhe lista rendas e despesas da origem`() {
+        val resumo = resumir(
+            rendas = listOf(renda(1, TipoRenda.SALARIO, 500_000, dia = 5), renda(2, TipoRenda.VALE, 100_000, dia = 20)),
+            despesas = listOf(despesa(1, 150_000, dia = 10, vinculo = VinculoPeriodo.SALARIO)),
+        )
+        assertEquals(listOf(1L), resumo.detalheSalario.rendas.map { it.renda.id })
+        assertEquals(LocalDate.of(2026, 10, 5), resumo.detalheSalario.rendas.single().data)
+        assertEquals(listOf(1L), resumo.detalheSalario.despesas.map { it.despesa.id })
+        assertEquals(listOf(2L), resumo.detalheVale.rendas.map { it.renda.id })
+        assertTrue(resumo.detalheVale.despesas.isEmpty())
     }
 }

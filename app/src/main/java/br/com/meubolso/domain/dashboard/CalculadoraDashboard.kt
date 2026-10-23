@@ -1,7 +1,12 @@
 package br.com.meubolso.domain.dashboard
 
+import br.com.meubolso.domain.cartao.CalculadoraFatura
 import br.com.meubolso.domain.despesa.CalculadoraOcorrencias
+import br.com.meubolso.domain.model.Cartao
+import br.com.meubolso.domain.model.CompraCartao
 import br.com.meubolso.domain.model.DespesaFixa
+import br.com.meubolso.domain.model.Fatura
+import br.com.meubolso.domain.model.OcorrenciaDespesa
 import br.com.meubolso.domain.model.Origem
 import br.com.meubolso.domain.model.PagamentoDespesa
 import br.com.meubolso.domain.model.Renda
@@ -53,24 +58,48 @@ data class Balanco(val rendaCentavos: Long = 0, val despesaCentavos: Long = 0) {
     }
 }
 
+data class RendaNoMes(val renda: Renda, val data: LocalDate)
+
+/** Os lançamentos que compõem o [Balanco] de uma origem no mês. */
+data class DetalheOrigem(
+    val rendas: List<RendaNoMes> = emptyList(),
+    val despesas: List<OcorrenciaDespesa> = emptyList(),
+    /** Faturas de cartão que vencem no mês; entram como uma despesa só, pelo total. */
+    val faturas: List<Fatura> = emptyList(),
+) {
+    val balanco: Balanco
+        get() = Balanco(
+            rendaCentavos = rendas.sumOf { it.renda.valorCentavos },
+            despesaCentavos = despesas.sumOf { it.despesa.valorCentavos } + faturas.sumOf { it.totalCentavos },
+        )
+
+    val vazio: Boolean get() = rendas.isEmpty() && despesas.isEmpty() && faturas.isEmpty()
+}
+
 data class ResumoDashboard(
-    val salario: Balanco = Balanco(),
-    val vale: Balanco = Balanco(),
+    val detalheSalario: DetalheOrigem = DetalheOrigem(),
+    val detalheVale: DetalheOrigem = DetalheOrigem(),
     /** Parte de [salario] que veio de renda extra. */
     val rendaExtraCentavos: Long = 0,
-    val possuiLancamentos: Boolean = false,
 ) {
+    val salario: Balanco get() = detalheSalario.balanco
+
+    val vale: Balanco get() = detalheVale.balanco
+
     val geral: Balanco get() = salario + vale
+
+    val possuiLancamentos: Boolean get() = !detalheSalario.vazio || !detalheVale.vazio
 }
 
 class CalculadoraDashboard @Inject constructor(
     private val calculadoraRecebimento: CalculadoraRecebimento,
     private val calculadoraOcorrencias: CalculadoraOcorrencias,
+    private val calculadoraFatura: CalculadoraFatura,
 ) {
 
     /**
-     * Rendas ativas recebidas no [mes] contra todas as despesas do [mes] (pagas ou não),
-     * separadas por [Origem].
+     * Rendas ativas recebidas no [mes] contra todas as despesas do [mes] (pagas ou não) e as
+     * faturas de cartão que vencem nele, separadas por [Origem].
      */
     fun resumir(
         rendas: List<Renda>,
@@ -78,28 +107,47 @@ class CalculadoraDashboard @Inject constructor(
         pagamentos: List<PagamentoDespesa>,
         mes: YearMonth,
         anteciparDiaNaoUtil: Boolean,
+        cartoes: List<Cartao> = emptyList(),
+        compras: List<CompraCartao> = emptyList(),
     ): ResumoDashboard {
         val ativas = rendas.filter { it.ativo }
-        val recebidasNoMes = ativas.filter { calculadoraRecebimento.dataNoMes(it, mes, anteciparDiaNaoUtil) != null }
+        val recebidasNoMes = ativas
+            .mapNotNull { renda ->
+                calculadoraRecebimento.dataNoMes(renda, mes, anteciparDiaNaoUtil)?.let { RendaNoMes(renda, it.prevista) }
+            }
+            .sortedBy { it.data }
         val ocorrencias = calculadoraOcorrencias.ocorrenciasNoMes(despesas, pagamentos, mes)
         val inicios = iniciosDePeriodo(ativas, mes, anteciparDiaNaoUtil)
+        val faturas = faturasQueVencemNoMes(cartoes, compras, mes)
 
-        val rendaPorOrigem = recebidasNoMes
-            .groupBy { it.tipo.origem }
-            .mapValues { (_, lista) -> lista.sumOf { it.valorCentavos } }
-        val despesaPorOrigem = ocorrencias
-            .groupBy { origemDaDespesa(it.despesa.vinculo, it.vencimento, inicios) }
-            .mapValues { (_, lista) -> lista.sumOf { it.despesa.valorCentavos } }
+        val rendasPorOrigem = recebidasNoMes.groupBy { it.renda.tipo.origem }
+        val despesasPorOrigem = ocorrencias.groupBy { origemDaDespesa(it.despesa.vinculo, it.vencimento, inicios) }
+        val faturasPorOrigem = faturas.groupBy { it.cartao.fonte }
 
-        fun balanco(origem: Origem) = Balanco(rendaPorOrigem[origem] ?: 0, despesaPorOrigem[origem] ?: 0)
+        fun detalhe(origem: Origem) = DetalheOrigem(
+            rendas = rendasPorOrigem[origem].orEmpty(),
+            despesas = despesasPorOrigem[origem].orEmpty(),
+            faturas = faturasPorOrigem[origem].orEmpty(),
+        )
 
         return ResumoDashboard(
-            salario = balanco(Origem.SALARIO),
-            vale = balanco(Origem.VALE),
-            rendaExtraCentavos = recebidasNoMes.filter { it.tipo == TipoRenda.RENDA_EXTRA }.sumOf { it.valorCentavos },
-            possuiLancamentos = recebidasNoMes.isNotEmpty() || ocorrencias.isNotEmpty(),
+            detalheSalario = detalhe(Origem.SALARIO),
+            detalheVale = detalhe(Origem.VALE),
+            rendaExtraCentavos = recebidasNoMes
+                .filter { it.renda.tipo == TipoRenda.RENDA_EXTRA }
+                .sumOf { it.renda.valorCentavos },
         )
     }
+
+    /**
+     * A fatura do mês de referência M vence em M ou em M+1, então basta olhar as faturas do
+     * mês anterior e do atual. Faturas sem lançamentos não aparecem.
+     */
+    private fun faturasQueVencemNoMes(cartoes: List<Cartao>, compras: List<CompraCartao>, mes: YearMonth): List<Fatura> =
+        cartoes
+            .flatMap { cartao -> listOf(mes.minusMonths(1), mes).map { calculadoraFatura.fatura(cartao, compras, it) } }
+            .filter { YearMonth.from(it.vencimento) == mes && it.lancamentos.isNotEmpty() }
+            .sortedWith(compareBy({ it.vencimento }, { it.cartao.nome.lowercase() }))
 
     /**
      * Datas previstas de salário e vale no mês anterior e no atual: cada uma abre um período

@@ -55,6 +55,7 @@
     <string name="erro_data_fim_antes_inicio">A data de fim deve ser igual ou posterior à data de início</string>
     <string name="erro_parcelas_invalidas">Informe entre 2 e 360 parcelas</string>
     <string name="erro_nome_duplicado">Já existe uma categoria com esse nome</string>
+    <string name="erro_valor_menor_que_parcelas">O valor precisa ser de pelo menos R$ 0,01 por parcela</string>
 
     <!-- Configurações -->
     <string name="configuracoes_titulo">Configurações</string>
@@ -84,11 +85,25 @@
     <string name="dashboard_vazio_descricao">Cadastre suas rendas e despesas para ver o resumo do mês.</string>
     <string name="dashboard_adicionar_renda">Renda</string>
     <string name="dashboard_adicionar_despesa">Despesa</string>
+    <string name="dashboard_ver_lancamentos">Ver lançamentos</string>
+    <string name="dashboard_ocultar_lancamentos">Ocultar lançamentos</string>
+    <string name="dashboard_lista_rendas">Rendas</string>
+    <string name="dashboard_lista_despesas">Despesas</string>
+    <string name="dashboard_sem_rendas">Nenhuma renda neste mês.</string>
+    <string name="dashboard_sem_despesas">Nenhuma despesa neste mês.</string>
+    <string name="dashboard_recebe_em">Recebe em %1$s</string>
+    <string name="dashboard_fatura">Fatura %1$s</string>
+    <string name="dashboard_fatura_detalhe">Cartão · vence em %1$s</string>
+    <plurals name="dashboard_fatura_lancamentos">
+        <item quantity="one">%1$d lançamento</item>
+        <item quantity="other">%1$d lançamentos</item>
+    </plurals>
 
     <!-- Navegação -->
     <string name="aba_inicio">Início</string>
     <string name="aba_despesas">Despesas</string>
     <string name="aba_rendas">Rendas</string>
+    <string name="aba_cartoes">Cartões</string>
     <string name="aba_configuracoes">Configurações</string>
 
     <!-- Seletor de mês -->
@@ -161,4 +176,71 @@
     </plurals>
     <string name="config_categorias_titulo">Categorias de despesa</string>
     <string name="config_categorias_descricao">Crie, edite ou exclua categorias personalizadas.</string>
+
+    <!-- Cartões: lista -->
+    <string name="cartoes_titulo">Cartões de crédito</string>
+    <string name="cartoes_novo">Novo cartão</string>
+    <string name="cartoes_vazio_titulo">Nenhum cartão cadastrado</string>
+    <string name="cartoes_vazio_descricao">Cadastre seus cartões para lançar compras e acompanhar o valor de cada fatura.</string>
+    <string name="cartoes_fecha_vence">Fecha dia %1$d · vence dia %2$d</string>
+    <string name="cartoes_fatura_atual">Fatura de %1$s</string>
+    <string name="cartoes_editar">Editar cartão</string>
+    <string name="origem_vale">Vale</string>
+    <string name="origem_salario">Salário</string>
+
+    <!-- Cartões: formulário -->
+    <string name="cartao_form_titulo_novo">Novo cartão</string>
+    <string name="cartao_form_titulo_editar">Editar cartão</string>
+    <string name="cartao_campo_nome">Nome</string>
+    <string name="cartao_campo_nome_dica">Ex.: Nubank, Itaú Visa</string>
+    <string name="cartao_campo_fechamento">Dia de fechamento</string>
+    <string name="cartao_campo_vencimento">Dia de vencimento</string>
+    <string name="cartao_campo_dia_ajuda">Em meses mais curtos, vale o último dia do mês.</string>
+    <string name="cartao_campo_fonte">Fonte de pagamento</string>
+    <string name="cartao_excluir_titulo">Excluir cartão?</string>
+    <string name="cartao_excluir_mensagem">\"%1$s\" será removido. Essa ação não pode ser desfeita.</string>
+    <plurals name="cartao_excluir_com_compras">
+        <item quantity="one">\"%1$s\" tem %2$d despesa lançada. O cartão e a despesa serão removidos de todas as faturas. Essa ação não pode ser desfeita.</item>
+        <item quantity="other">\"%1$s\" tem %2$d despesas lançadas. O cartão e as despesas serão removidos de todas as faturas. Essa ação não pode ser desfeita.</item>
+    </plurals>
+
+    <!-- Fatura -->
+    <string name="fatura_fechamento">Fechamento</string>
+    <string name="fatura_vencimento">Vencimento</string>
+    <string name="fatura_fonte">Pagar com</string>
+    <string name="fatura_total">Total da fatura</string>
+    <string name="fatura_aberta">Aberta</string>
+    <string name="fatura_fechada">Fechada</string>
+    <string name="fatura_vazia">Nenhuma despesa nesta fatura.</string>
+    <string name="fatura_nova_despesa">Nova despesa</string>
+    <string name="fatura_parcela">Parcela %1$d/%2$d</string>
+    <plurals name="fatura_parcelas_restantes">
+        <item quantity="one">falta %1$d</item>
+        <item quantity="other">faltam %1$d</item>
+    </plurals>
+    <string name="fatura_ultima_parcela">última</string>
+    <string name="fatura_fixo">Fixo</string>
+
+    <!-- Despesa em fatura de cartão -->
+    <string name="despesa_incluir_fatura">Incluir em fatura de cartão</string>
+    <string name="despesa_campo_cartao">Cartão</string>
+    <string name="despesa_novo_cartao">Cadastrar cartão…</string>
+    <string name="despesa_sem_cartoes">Nenhum cartão cadastrado. Cadastre um para lançar a despesa na fatura.</string>
+    <string name="despesa_campo_valor_total">Valor total da compra</string>
+    <string name="despesa_campo_valor_mensal">Valor mensal</string>
+    <string name="despesa_campo_data_compra">Data da compra</string>
+    <string name="despesa_campo_modalidade">Forma de pagamento</string>
+    <string name="despesa_parcelas_resumo">%1$d× de %2$s</string>
+    <string name="despesa_parcelas_resumo_ultima">%1$d× de %2$s + última de %3$s</string>
+    <string name="despesa_entra_na_fatura">Entra na fatura de %1$s (fecha em %2$s).</string>
+    <string name="despesa_entrou_na_fatura">Lançada a partir da fatura de %1$s.</string>
+    <string name="despesa_fixa_ativa">Recorrência ativa</string>
+    <string name="despesa_fixa_ativa_ajuda">Desative para encerrar a assinatura. As faturas até a última cobrança continuam com o lançamento.</string>
+    <string name="despesa_campo_ultima_fatura">Última fatura cobrada</string>
+    <string name="despesa_compra_excluir_mensagem">\"%1$s\" será removida de todas as faturas. Para manter o histórico de uma despesa fixa, encerre a recorrência.</string>
+    <string name="despesa_compra_excluir_mensagem_simples">\"%1$s\" será removida de todas as faturas. Essa ação não pode ser desfeita.</string>
+
+    <string name="modalidade_a_vista">À vista</string>
+    <string name="modalidade_parcelado">Parcelado</string>
+    <string name="modalidade_fixo">Fixo</string>
 </resources>

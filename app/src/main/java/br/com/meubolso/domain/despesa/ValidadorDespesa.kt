@@ -3,7 +3,7 @@ package br.com.meubolso.domain.despesa
 import br.com.meubolso.domain.model.Recorrencia
 import br.com.meubolso.domain.validacao.ErroValidacao
 
-enum class CampoDespesa { DESCRICAO, CATEGORIA, VALOR, DIA, PARCELAS }
+enum class CampoDespesa { DESCRICAO, CATEGORIA, VALOR, DIA, PARCELAS, CARTAO, ENCERRAMENTO }
 
 object ValidadorDespesa {
 

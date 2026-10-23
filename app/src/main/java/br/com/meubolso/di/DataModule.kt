@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import br.com.meubolso.data.local.MeuBolsoDatabase
+import br.com.meubolso.data.local.cartao.CartaoDao
 import br.com.meubolso.data.local.categoria.CategoriaDao
 import br.com.meubolso.data.local.despesa.DespesaDao
 import br.com.meubolso.data.local.renda.RendaDao
@@ -38,6 +39,9 @@ object DataModule {
 
     @Provides
     fun provideDespesaDao(database: MeuBolsoDatabase): DespesaDao = database.despesaDao()
+
+    @Provides
+    fun provideCartaoDao(database: MeuBolsoDatabase): CartaoDao = database.cartaoDao()
 
     @Provides
     @Singleton

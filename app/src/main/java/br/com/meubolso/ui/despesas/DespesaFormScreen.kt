@@ -18,6 +18,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -44,34 +45,39 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import br.com.meubolso.R
 import br.com.meubolso.domain.despesa.CampoDespesa
+import br.com.meubolso.domain.model.Cartao
+import br.com.meubolso.domain.model.Categoria
 import br.com.meubolso.domain.model.FormaPagamento
+import br.com.meubolso.domain.model.ModalidadeCompra
 import br.com.meubolso.domain.model.Recorrencia
 import br.com.meubolso.domain.model.VinculoPeriodo
 import br.com.meubolso.ui.components.AcaoMenu
+import br.com.meubolso.ui.components.CampoData
 import br.com.meubolso.ui.components.CampoMoeda
 import br.com.meubolso.ui.components.CampoSelecao
 import br.com.meubolso.ui.components.PontoCor
 import br.com.meubolso.ui.components.SeletorMes
 import br.com.meubolso.ui.components.mensagem
 import br.com.meubolso.ui.components.rotulo
+import br.com.meubolso.util.Formatadores
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DespesaFormScreen(
     onVoltar: () -> Unit,
     onGerenciarCategorias: () -> Unit,
+    onNovoCartao: () -> Unit,
     viewModel: DespesaFormViewModel = hiltViewModel(),
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     val categorias by viewModel.categorias.collectAsStateWithLifecycle()
+    val cartoes by viewModel.cartoes.collectAsStateWithLifecycle()
+    val previa by viewModel.previaFatura.collectAsStateWithLifecycle()
     var confirmarExclusao by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(estado.concluido) {
         if (estado.concluido) onVoltar()
     }
-
-    @Composable
-    fun erroDe(campo: CampoDespesa): String? = estado.erros[campo]?.let { stringResource(it.mensagem) }
 
     Scaffold(
         topBar = {
@@ -106,127 +112,22 @@ fun DespesaFormScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
         ) {
-            OutlinedTextField(
-                value = estado.descricao,
-                onValueChange = viewModel::alterarDescricao,
-                label = { Text(stringResource(R.string.despesa_campo_descricao)) },
-                placeholder = { Text(stringResource(R.string.despesa_campo_descricao_dica)) },
-                singleLine = true,
-                isError = estado.erros.containsKey(CampoDespesa.DESCRICAO),
-                supportingText = erroDe(CampoDespesa.DESCRICAO)?.let { { Text(it) } },
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Sentences,
-                    imeAction = ImeAction.Next,
-                ),
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            CampoSelecao(
-                rotulo = stringResource(R.string.despesa_campo_categoria),
-                opcoes = categorias,
-                selecionada = categorias.firstOrNull { it.id == estado.categoriaId },
-                textoDe = { it.nome },
-                onSelecionar = viewModel::alterarCategoria,
-                iconeDe = { PontoCor(it.cor) },
-                erro = erroDe(CampoDespesa.CATEGORIA),
-                acaoExtra = AcaoMenu(stringResource(R.string.despesa_gerenciar_categorias), onGerenciarCategorias),
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            CampoMoeda(
-                valorCentavos = estado.valorCentavos,
-                onValorChange = viewModel::alterarValor,
-                rotulo = stringResource(R.string.despesa_campo_valor),
-                erro = erroDe(CampoDespesa.VALOR),
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            OutlinedTextField(
-                value = estado.dia,
-                onValueChange = viewModel::alterarDia,
-                label = { Text(stringResource(R.string.despesa_campo_dia)) },
-                singleLine = true,
-                isError = estado.erros.containsKey(CampoDespesa.DIA),
-                supportingText = {
-                    Text(erroDe(CampoDespesa.DIA) ?: stringResource(R.string.despesa_campo_dia_ajuda))
-                },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            CampoSelecao(
-                rotulo = stringResource(R.string.despesa_campo_forma),
-                opcoes = FormaPagamento.entries,
-                selecionada = estado.formaPagamento,
-                textoDe = { stringResource(it.rotulo) },
-                onSelecionar = viewModel::alterarFormaPagamento,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Text(stringResource(R.string.despesa_campo_vinculo), style = MaterialTheme.typography.labelLarge)
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                VinculoPeriodo.entries.forEachIndexed { indice, vinculo ->
-                    SegmentedButton(
-                        selected = estado.vinculo == vinculo,
-                        onClick = { viewModel.alterarVinculo(vinculo) },
-                        shape = SegmentedButtonDefaults.itemShape(indice, VinculoPeriodo.entries.size),
-                    ) { Text(stringResource(vinculo.rotulo)) }
+            // Na edição o tipo não muda: despesa fixa e compra no cartão ficam em tabelas diferentes.
+            if (!estado.editando) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        stringResource(R.string.despesa_incluir_fatura),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Switch(checked = estado.emFatura, onCheckedChange = viewModel::alterarEmFatura)
                 }
             }
-            if (estado.vinculo == VinculoPeriodo.AUTOMATICO) {
-                Text(
-                    stringResource(R.string.despesa_vinculo_ajuda),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
 
-            Text(stringResource(R.string.despesa_campo_recorrencia), style = MaterialTheme.typography.labelLarge)
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                Recorrencia.entries.forEachIndexed { indice, recorrencia ->
-                    SegmentedButton(
-                        selected = estado.recorrencia == recorrencia,
-                        onClick = { viewModel.alterarRecorrencia(recorrencia) },
-                        shape = SegmentedButtonDefaults.itemShape(indice, Recorrencia.entries.size),
-                    ) { Text(stringResource(recorrencia.rotulo)) }
-                }
-            }
-            if (estado.recorrencia == Recorrencia.PARCELADA) {
-                OutlinedTextField(
-                    value = estado.totalParcelas,
-                    onValueChange = viewModel::alterarTotalParcelas,
-                    label = { Text(stringResource(R.string.despesa_campo_parcelas)) },
-                    singleLine = true,
-                    isError = estado.erros.containsKey(CampoDespesa.PARCELAS),
-                    supportingText = erroDe(CampoDespesa.PARCELAS)?.let { { Text(it) } },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-
-            Text(
-                stringResource(
-                    if (estado.recorrencia == Recorrencia.PARCELADA) {
-                        R.string.despesa_campo_mes_inicio_parcelada
-                    } else {
-                        R.string.despesa_campo_mes_inicio
-                    },
-                ),
-                style = MaterialTheme.typography.labelLarge,
-            )
-            SeletorMes(
-                mes = estado.mesInicio,
-                onMesChange = viewModel::alterarMesInicio,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    stringResource(R.string.despesa_campo_ativa),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f),
-                )
-                Switch(checked = estado.ativa, onCheckedChange = viewModel::alterarAtiva)
+            if (estado.emFatura) {
+                CamposCompraCartao(estado, categorias, cartoes, previa, viewModel, onGerenciarCategorias, onNovoCartao)
+            } else {
+                CamposDespesaFixa(estado, categorias, viewModel, onGerenciarCategorias)
             }
 
             Button(onClick = viewModel::salvar, modifier = Modifier.fillMaxWidth()) {
@@ -239,7 +140,18 @@ fun DespesaFormScreen(
         AlertDialog(
             onDismissRequest = { confirmarExclusao = false },
             title = { Text(stringResource(R.string.despesa_excluir_titulo)) },
-            text = { Text(stringResource(R.string.despesa_excluir_mensagem, estado.descricao)) },
+            text = {
+                Text(
+                    stringResource(
+                        when {
+                            !estado.emFatura -> R.string.despesa_excluir_mensagem
+                            estado.modalidade == ModalidadeCompra.FIXO -> R.string.despesa_compra_excluir_mensagem
+                            else -> R.string.despesa_compra_excluir_mensagem_simples
+                        },
+                        estado.descricao,
+                    ),
+                )
+            },
             confirmButton = {
                 TextButton(onClick = {
                     confirmarExclusao = false
@@ -253,4 +165,282 @@ fun DespesaFormScreen(
             },
         )
     }
+}
+
+@Composable
+private fun DespesaFormUiState.erroDe(campo: CampoDespesa): String? = erros[campo]?.let { stringResource(it.mensagem) }
+
+@Composable
+private fun CampoDescricao(estado: DespesaFormUiState, onValorChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = estado.descricao,
+        onValueChange = onValorChange,
+        label = { Text(stringResource(R.string.despesa_campo_descricao)) },
+        placeholder = { Text(stringResource(R.string.despesa_campo_descricao_dica)) },
+        singleLine = true,
+        isError = estado.erros.containsKey(CampoDespesa.DESCRICAO),
+        supportingText = estado.erroDe(CampoDespesa.DESCRICAO)?.let { { Text(it) } },
+        keyboardOptions = KeyboardOptions(
+            capitalization = KeyboardCapitalization.Sentences,
+            imeAction = ImeAction.Next,
+        ),
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun CampoCategoria(
+    estado: DespesaFormUiState,
+    categorias: List<Categoria>,
+    onSelecionar: (Categoria) -> Unit,
+    onGerenciarCategorias: () -> Unit,
+) {
+    CampoSelecao(
+        rotulo = stringResource(R.string.despesa_campo_categoria),
+        opcoes = categorias,
+        selecionada = categorias.firstOrNull { it.id == estado.categoriaId },
+        textoDe = { it.nome },
+        onSelecionar = onSelecionar,
+        iconeDe = { PontoCor(it.cor) },
+        erro = estado.erroDe(CampoDespesa.CATEGORIA),
+        acaoExtra = AcaoMenu(stringResource(R.string.despesa_gerenciar_categorias), onGerenciarCategorias),
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun CampoParcelas(estado: DespesaFormUiState, onValorChange: (String) -> Unit, ajuda: String? = null) {
+    val erro = estado.erroDe(CampoDespesa.PARCELAS)
+    OutlinedTextField(
+        value = estado.totalParcelas,
+        onValueChange = onValorChange,
+        label = { Text(stringResource(R.string.despesa_campo_parcelas)) },
+        singleLine = true,
+        isError = erro != null,
+        supportingText = (erro ?: ajuda)?.let { { Text(it) } },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun CamposDespesaFixa(
+    estado: DespesaFormUiState,
+    categorias: List<Categoria>,
+    viewModel: DespesaFormViewModel,
+    onGerenciarCategorias: () -> Unit,
+) {
+    CampoDescricao(estado, viewModel::alterarDescricao)
+
+    CampoCategoria(estado, categorias, viewModel::alterarCategoria, onGerenciarCategorias)
+
+    CampoMoeda(
+        valorCentavos = estado.valorCentavos,
+        onValorChange = viewModel::alterarValor,
+        rotulo = stringResource(R.string.despesa_campo_valor),
+        erro = estado.erroDe(CampoDespesa.VALOR),
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    OutlinedTextField(
+        value = estado.dia,
+        onValueChange = viewModel::alterarDia,
+        label = { Text(stringResource(R.string.despesa_campo_dia)) },
+        singleLine = true,
+        isError = estado.erros.containsKey(CampoDespesa.DIA),
+        supportingText = {
+            Text(estado.erroDe(CampoDespesa.DIA) ?: stringResource(R.string.despesa_campo_dia_ajuda))
+        },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    CampoSelecao(
+        rotulo = stringResource(R.string.despesa_campo_forma),
+        opcoes = FormaPagamento.entries,
+        selecionada = estado.formaPagamento,
+        textoDe = { stringResource(it.rotulo) },
+        onSelecionar = viewModel::alterarFormaPagamento,
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    Text(stringResource(R.string.despesa_campo_vinculo), style = MaterialTheme.typography.labelLarge)
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+        VinculoPeriodo.entries.forEachIndexed { indice, vinculo ->
+            SegmentedButton(
+                selected = estado.vinculo == vinculo,
+                onClick = { viewModel.alterarVinculo(vinculo) },
+                shape = SegmentedButtonDefaults.itemShape(indice, VinculoPeriodo.entries.size),
+            ) { Text(stringResource(vinculo.rotulo)) }
+        }
+    }
+    if (estado.vinculo == VinculoPeriodo.AUTOMATICO) {
+        TextoAjuda(stringResource(R.string.despesa_vinculo_ajuda))
+    }
+
+    Text(stringResource(R.string.despesa_campo_recorrencia), style = MaterialTheme.typography.labelLarge)
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+        Recorrencia.entries.forEachIndexed { indice, recorrencia ->
+            SegmentedButton(
+                selected = estado.recorrencia == recorrencia,
+                onClick = { viewModel.alterarRecorrencia(recorrencia) },
+                shape = SegmentedButtonDefaults.itemShape(indice, Recorrencia.entries.size),
+            ) { Text(stringResource(recorrencia.rotulo)) }
+        }
+    }
+    if (estado.recorrencia == Recorrencia.PARCELADA) {
+        CampoParcelas(estado, viewModel::alterarTotalParcelas)
+    }
+
+    Text(
+        stringResource(
+            if (estado.recorrencia == Recorrencia.PARCELADA) {
+                R.string.despesa_campo_mes_inicio_parcelada
+            } else {
+                R.string.despesa_campo_mes_inicio
+            },
+        ),
+        style = MaterialTheme.typography.labelLarge,
+    )
+    SeletorMes(
+        mes = estado.mesInicio,
+        onMesChange = viewModel::alterarMesInicio,
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Text(
+            stringResource(R.string.despesa_campo_ativa),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+        )
+        Switch(checked = estado.ativa, onCheckedChange = viewModel::alterarAtiva)
+    }
+}
+
+@Composable
+private fun CamposCompraCartao(
+    estado: DespesaFormUiState,
+    categorias: List<Categoria>,
+    cartoes: List<Cartao>,
+    previa: PreviaFatura?,
+    viewModel: DespesaFormViewModel,
+    onGerenciarCategorias: () -> Unit,
+    onNovoCartao: () -> Unit,
+) {
+    if (cartoes.isEmpty()) {
+        TextoAjuda(stringResource(R.string.despesa_sem_cartoes))
+        OutlinedButton(onClick = onNovoCartao, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.cartoes_novo))
+        }
+        return
+    }
+
+    CampoSelecao(
+        rotulo = stringResource(R.string.despesa_campo_cartao),
+        opcoes = cartoes,
+        selecionada = cartoes.firstOrNull { it.id == estado.cartaoId },
+        textoDe = { it.nome },
+        onSelecionar = viewModel::alterarCartao,
+        erro = estado.erroDe(CampoDespesa.CARTAO),
+        acaoExtra = AcaoMenu(stringResource(R.string.despesa_novo_cartao), onNovoCartao),
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    CampoDescricao(estado, viewModel::alterarDescricao)
+
+    CampoCategoria(estado, categorias, viewModel::alterarCategoria, onGerenciarCategorias)
+
+    Text(stringResource(R.string.despesa_campo_modalidade), style = MaterialTheme.typography.labelLarge)
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+        ModalidadeCompra.entries.forEachIndexed { indice, modalidade ->
+            SegmentedButton(
+                selected = estado.modalidade == modalidade,
+                onClick = { viewModel.alterarModalidade(modalidade) },
+                shape = SegmentedButtonDefaults.itemShape(indice, ModalidadeCompra.entries.size),
+            ) { Text(stringResource(modalidade.rotulo)) }
+        }
+    }
+
+    CampoMoeda(
+        valorCentavos = estado.valorCentavos,
+        onValorChange = viewModel::alterarValor,
+        rotulo = stringResource(
+            when (estado.modalidade) {
+                ModalidadeCompra.A_VISTA -> R.string.despesa_campo_valor
+                ModalidadeCompra.PARCELADO -> R.string.despesa_campo_valor_total
+                ModalidadeCompra.FIXO -> R.string.despesa_campo_valor_mensal
+            },
+        ),
+        erro = estado.erroDe(CampoDespesa.VALOR),
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    if (estado.modalidade == ModalidadeCompra.PARCELADO) {
+        CampoParcelas(
+            estado = estado,
+            onValorChange = viewModel::alterarTotalParcelas,
+            ajuda = previa?.parcelas?.takeIf { estado.valorCentavos > 0 }?.let { resumoParcelas(it) },
+        )
+    }
+
+    CampoData(
+        rotulo = stringResource(R.string.despesa_campo_data_compra),
+        data = estado.dataCompra,
+        onDataChange = viewModel::alterarDataCompra,
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    previa?.let {
+        TextoAjuda(
+            if (it.jaLancada) {
+                stringResource(R.string.despesa_entrou_na_fatura, Formatadores.mesAno(it.mes))
+            } else {
+                stringResource(R.string.despesa_entra_na_fatura, Formatadores.mesAno(it.mes), Formatadores.data(it.fechamento))
+            },
+        )
+    }
+
+    // Encerrar só faz sentido para uma assinatura já lançada.
+    if (estado.editando && estado.modalidade == ModalidadeCompra.FIXO) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Text(
+                stringResource(R.string.despesa_fixa_ativa),
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(1f),
+            )
+            Switch(checked = estado.fixaAtiva, onCheckedChange = viewModel::alterarFixaAtiva)
+        }
+        TextoAjuda(stringResource(R.string.despesa_fixa_ativa_ajuda))
+        val ultima = estado.mesUltimaFatura
+        if (!estado.fixaAtiva && ultima != null) {
+            Text(stringResource(R.string.despesa_campo_ultima_fatura), style = MaterialTheme.typography.labelLarge)
+            SeletorMes(mes = ultima, onMesChange = viewModel::alterarMesUltimaFatura, modifier = Modifier.fillMaxWidth())
+            estado.erroDe(CampoDespesa.ENCERRAMENTO)?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
+        }
+    }
+}
+
+/** "5× de R$ 100,00" ou "2× de R$ 33,33 + última de R$ 33,34". */
+@Composable
+private fun resumoParcelas(parcelas: List<Long>): String {
+    val primeira = parcelas.first()
+    val ultima = parcelas.last()
+    return if (primeira == ultima) {
+        stringResource(R.string.despesa_parcelas_resumo, parcelas.size, Formatadores.moeda(primeira))
+    } else {
+        stringResource(
+            R.string.despesa_parcelas_resumo_ultima,
+            parcelas.size - 1,
+            Formatadores.moeda(primeira),
+            Formatadores.moeda(ultima),
+        )
+    }
+}
+
+@Composable
+private fun TextoAjuda(texto: String) {
+    Text(texto, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
