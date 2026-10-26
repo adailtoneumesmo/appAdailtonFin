@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import br.com.meubolso.R
+import br.com.meubolso.domain.model.FormaCalculoVale
 import br.com.meubolso.domain.model.ModoDiaRecebimento
 import br.com.meubolso.domain.model.TipoRenda
 import br.com.meubolso.domain.renda.CampoRenda
@@ -53,6 +54,7 @@ import br.com.meubolso.ui.components.CampoData
 import br.com.meubolso.ui.components.CampoMoeda
 import br.com.meubolso.ui.components.mensagem
 import br.com.meubolso.ui.components.rotulo
+import br.com.meubolso.ui.components.textoCalculoVale
 import br.com.meubolso.util.Formatadores
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,6 +65,7 @@ fun RendaFormScreen(
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     val previsao by viewModel.previsao.collectAsStateWithLifecycle()
+    val previaVale by viewModel.previaVale.collectAsStateWithLifecycle()
     var confirmarExclusao by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(estado.concluido) {
@@ -131,30 +134,63 @@ fun RendaFormScreen(
                 }
             }
 
+            if (estado.valeAlimentacao) {
+                Text(stringResource(R.string.renda_campo_forma_calculo), style = MaterialTheme.typography.labelLarge)
+                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                    FormaCalculoVale.entries.forEachIndexed { indice, forma ->
+                        SegmentedButton(
+                            selected = estado.formaCalculoVale == forma,
+                            onClick = { viewModel.alterarFormaCalculoVale(forma) },
+                            shape = SegmentedButtonDefaults.itemShape(indice, FormaCalculoVale.entries.size),
+                        ) { Text(stringResource(forma.rotulo)) }
+                    }
+                }
+                Text(
+                    erroDe(CampoRenda.FORMA_CALCULO) ?: stringResource(R.string.renda_vale_ajuda),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (estado.erros.containsKey(CampoRenda.FORMA_CALCULO)) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+            }
+
             CampoMoeda(
                 valorCentavos = estado.valorCentavos,
                 onValorChange = viewModel::alterarValor,
-                rotulo = stringResource(R.string.renda_campo_valor),
+                rotulo = stringResource(
+                    when {
+                        !estado.valeAlimentacao -> R.string.renda_campo_valor
+                        estado.formaCalculoVale == FormaCalculoVale.VALOR_POR_DIA -> R.string.renda_campo_valor_diario
+                        else -> R.string.renda_campo_valor_mensal
+                    },
+                ),
                 erro = erroDe(CampoRenda.VALOR),
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Text(stringResource(R.string.renda_campo_modo_dia), style = MaterialTheme.typography.labelLarge)
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                ModoDiaRecebimento.entries.forEachIndexed { indice, modo ->
-                    SegmentedButton(
-                        selected = estado.modoDia == modo,
-                        onClick = { viewModel.alterarModoDia(modo) },
-                        shape = SegmentedButtonDefaults.itemShape(indice, ModoDiaRecebimento.entries.size),
-                    ) {
-                        Text(
-                            stringResource(
-                                when (modo) {
-                                    ModoDiaRecebimento.DIA_FIXO -> R.string.renda_modo_dia_fixo
-                                    ModoDiaRecebimento.DIA_UTIL -> R.string.renda_modo_dia_util
-                                },
-                            ),
-                        )
+            previaVale?.let { CardPreviaVale(it) }
+
+            // VR/VA: sempre dia fixo do mês (dia de disponibilização).
+            if (!estado.valeAlimentacao) {
+                Text(stringResource(R.string.renda_campo_modo_dia), style = MaterialTheme.typography.labelLarge)
+                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                    ModoDiaRecebimento.entries.forEachIndexed { indice, modo ->
+                        SegmentedButton(
+                            selected = estado.modoDia == modo,
+                            onClick = { viewModel.alterarModoDia(modo) },
+                            shape = SegmentedButtonDefaults.itemShape(indice, ModoDiaRecebimento.entries.size),
+                        ) {
+                            Text(
+                                stringResource(
+                                    when (modo) {
+                                        ModoDiaRecebimento.DIA_FIXO -> R.string.renda_modo_dia_fixo
+                                        ModoDiaRecebimento.DIA_UTIL -> R.string.renda_modo_dia_util
+                                    },
+                                ),
+                            )
+                        }
                     }
                 }
             }
@@ -165,10 +201,10 @@ fun RendaFormScreen(
                 label = {
                     Text(
                         stringResource(
-                            if (estado.modoDia == ModoDiaRecebimento.DIA_UTIL) {
-                                R.string.renda_campo_dia_util
-                            } else {
-                                R.string.renda_campo_dia
+                            when {
+                                estado.valeAlimentacao -> R.string.renda_campo_dia_disponibilizacao
+                                estado.modoDia == ModoDiaRecebimento.DIA_UTIL -> R.string.renda_campo_dia_util
+                                else -> R.string.renda_campo_dia
                             },
                         ),
                     )
@@ -232,6 +268,30 @@ fun RendaFormScreen(
                 }
             },
         )
+    }
+}
+
+/** "Valor de outubro/2026" + "19 dias úteis em novembro/2026 × R$ 20,00 = R$ 380,00". */
+@Composable
+private fun CardPreviaVale(previa: PreviaVale) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text(
+                stringResource(R.string.renda_vale_previa_titulo, Formatadores.mesAnoCompacto(previa.mesReferencia)),
+                style = MaterialTheme.typography.labelLarge,
+            )
+            Text(textoCalculoVale(previa.valor), style = MaterialTheme.typography.titleMedium)
+            if (previa.valor.diasUteis != null) {
+                Text(
+                    stringResource(R.string.vale_calculo_dias_uteis_ajuda),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
 

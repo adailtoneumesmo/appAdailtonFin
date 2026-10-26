@@ -3,6 +3,7 @@ package br.com.meubolso.data.local.renda
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import br.com.meubolso.domain.model.FormaCalculoVale
 import br.com.meubolso.domain.model.ModoDiaRecebimento
 import br.com.meubolso.domain.model.Renda
 import br.com.meubolso.domain.model.TipoRenda
@@ -19,6 +20,8 @@ data class RendaEntity(
     val ativo: Boolean,
     @ColumnInfo(name = "data_inicio") val dataInicio: LocalDate,
     @ColumnInfo(name = "data_fim") val dataFim: LocalDate?,
+    /** Só para VR/VA (v4); nulo nas demais rendas. */
+    @ColumnInfo(name = "forma_calculo_vale") val formaCalculoVale: FormaCalculoVale? = null,
 )
 
 fun RendaEntity.paraDominio() = Renda(
@@ -31,6 +34,7 @@ fun RendaEntity.paraDominio() = Renda(
     ativo = ativo,
     dataInicio = dataInicio,
     dataFim = dataFim,
+    formaCalculoVale = formaCalculoVale,
 )
 
 fun Renda.paraEntity() = RendaEntity(
@@ -43,4 +47,5 @@ fun Renda.paraEntity() = RendaEntity(
     ativo = ativo,
     dataInicio = dataInicio,
     dataFim = dataFim,
+    formaCalculoVale = formaCalculoVale,
 )

@@ -7,14 +7,20 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Dia útil = segunda a sexta, exceto feriados nacionais. */
+/**
+ * Dia útil = segunda a sexta, exceto os feriados das [fontes].
+ * Por padrão só os feriados nacionais; pontos facultativos não contam.
+ */
 @Singleton
-class CalendarioDiasUteis @Inject constructor() {
+class CalendarioDiasUteis(private val fontes: List<FonteFeriados>) {
+
+    @Inject
+    constructor() : this(listOf(FeriadosNacionais))
 
     private val feriadosPorAno = ConcurrentHashMap<Int, Set<LocalDate>>()
 
     fun ehFeriado(data: LocalDate): Boolean =
-        data in feriadosPorAno.getOrPut(data.year) { FeriadosNacionais.doAno(data.year) }
+        data in feriadosPorAno.getOrPut(data.year) { fontes.flatMapTo(HashSet()) { it.doAno(data.year) } }
 
     fun ehDiaUtil(data: LocalDate): Boolean =
         data.dayOfWeek != DayOfWeek.SATURDAY &&
@@ -27,6 +33,8 @@ class CalendarioDiasUteis @Inject constructor() {
         while (!ehDiaUtil(atual)) atual = atual.minusDays(1)
         return atual
     }
+
+    fun quantidadeNoMes(mes: YearMonth): Int = (1..mes.lengthOfMonth()).count { ehDiaUtil(mes.atDay(it)) }
 
     /**
      * N-ésimo dia útil do mês. Se o mês tiver menos de [n] dias úteis,

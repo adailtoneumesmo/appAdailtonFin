@@ -1,6 +1,7 @@
 package br.com.meubolso.data.local.cartao
 
 import androidx.room.Dao
+import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
@@ -37,6 +38,9 @@ interface CartaoDao {
 
     @Upsert
     suspend fun salvarCompra(compra: CompraCartaoEntity)
+
+    @Insert
+    suspend fun inserirCompra(compra: CompraCartaoEntity): Long
 
     @Query("DELETE FROM compras_cartao WHERE id = :id")
     suspend fun excluirCompra(id: Long)

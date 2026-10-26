@@ -4,10 +4,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -27,13 +29,23 @@ import br.com.meubolso.ui.components.LogoMeuBolso
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfiguracoesScreen(
+    onVoltar: () -> Unit,
     onCategorias: () -> Unit,
     viewModel: ConfiguracoesViewModel = hiltViewModel(),
 ) {
     val antecipar by viewModel.anteciparDiaNaoUtil.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.configuracoes_titulo)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.configuracoes_titulo)) },
+                navigationIcon = {
+                    IconButton(onClick = onVoltar) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.acao_voltar))
+                    }
+                },
+            )
+        },
     ) { padding ->
         Column(Modifier.padding(padding)) {
             LogoMeuBolso(

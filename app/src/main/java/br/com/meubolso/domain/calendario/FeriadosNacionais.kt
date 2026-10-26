@@ -7,7 +7,7 @@ import java.time.MonthDay
  * Feriados nacionais oficiais do Brasil (Lei 662/1949, 6.802/1980 e 14.759/2023).
  * Pontos facultativos (Carnaval, Corpus Christi) não entram.
  */
-object FeriadosNacionais {
+object FeriadosNacionais : FonteFeriados {
 
     private val FIXOS = listOf(
         MonthDay.of(1, 1),   // Confraternização Universal
@@ -21,7 +21,7 @@ object FeriadosNacionais {
         MonthDay.of(12, 25), // Natal
     )
 
-    fun doAno(ano: Int): Set<LocalDate> = buildSet {
+    override fun doAno(ano: Int): Set<LocalDate> = buildSet {
         FIXOS.forEach { add(it.atYear(ano)) }
         add(pascoa(ano).minusDays(2)) // Sexta-feira Santa
     }

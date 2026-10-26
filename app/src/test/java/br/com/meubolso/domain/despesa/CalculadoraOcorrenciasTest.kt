@@ -66,6 +66,15 @@ class CalculadoraOcorrenciasTest {
     }
 
     @Test
+    fun `unica so ocorre no mes de inicio`() {
+        val d = despesa(inicio = YearMonth.of(2026, 10)).copy(recorrencia = Recorrencia.UNICA)
+        assertNull(calculadora.ocorrenciaNoMes(d, YearMonth.of(2026, 9)))
+        assertNull(calculadora.ocorrenciaNoMes(d, YearMonth.of(2026, 10))?.parcela)
+        assertEquals(LocalDate.of(2026, 10, 10), calculadora.ocorrenciaNoMes(d, YearMonth.of(2026, 10))?.vencimento)
+        assertNull(calculadora.ocorrenciaNoMes(d, YearMonth.of(2026, 11)))
+    }
+
+    @Test
     fun `pagamento do mes marca ocorrencia como paga`() {
         val d = despesa()
         val pagamentos = listOf(

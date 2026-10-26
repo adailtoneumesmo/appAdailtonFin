@@ -1,6 +1,8 @@
 package br.com.meubolso.domain.renda
 
+import br.com.meubolso.domain.model.FormaCalculoVale
 import br.com.meubolso.domain.model.ModoDiaRecebimento
+import br.com.meubolso.domain.model.TipoRenda
 import br.com.meubolso.domain.validacao.ErroValidacao
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -62,5 +64,15 @@ class ValidadorRendaTest {
             ErroValidacao.DATA_FIM_ANTES_DO_INICIO,
             validar(fim = hoje.minusDays(1))[CampoRenda.DATA_FIM],
         )
+    }
+
+    @Test
+    fun `vale alimentacao exige forma de calculo`() {
+        val semForma = ValidadorRenda.validar("VR", 2_000, ModoDiaRecebimento.DIA_FIXO, 25, hoje, null, TipoRenda.VALE_ALIMENTACAO, null)
+        assertEquals(ErroValidacao.OBRIGATORIO, semForma[CampoRenda.FORMA_CALCULO])
+        val comForma = ValidadorRenda.validar(
+            "VR", 2_000, ModoDiaRecebimento.DIA_FIXO, 25, hoje, null, TipoRenda.VALE_ALIMENTACAO, FormaCalculoVale.VALOR_POR_DIA,
+        )
+        assertTrue(comForma.isEmpty())
     }
 }

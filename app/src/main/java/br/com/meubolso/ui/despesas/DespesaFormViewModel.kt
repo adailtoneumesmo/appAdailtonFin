@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import br.com.meubolso.data.repository.CartaoRepository
 import br.com.meubolso.data.repository.CategoriaRepository
 import br.com.meubolso.data.repository.DespesaRepository
+import br.com.meubolso.data.repository.RendaRepository
 import br.com.meubolso.domain.cartao.CalculadoraFatura
 import br.com.meubolso.domain.cartao.ValidadorCompraCartao
 import br.com.meubolso.domain.despesa.CampoDespesa
@@ -18,6 +19,7 @@ import br.com.meubolso.domain.model.FormaPagamento
 import br.com.meubolso.domain.model.ModalidadeCompra
 import br.com.meubolso.domain.model.Recorrencia
 import br.com.meubolso.domain.model.VinculoPeriodo
+import br.com.meubolso.domain.vale.CalculadoraValeAlimentacao
 import br.com.meubolso.domain.validacao.ErroValidacao
 import br.com.meubolso.ui.navigation.Rotas
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -64,6 +66,19 @@ data class DespesaFormUiState(
     val editando: Boolean get() = id != null || idCompra != null
 }
 
+/**
+ * Efeito de uma despesa paga com VR/VA no saldo do vale do [mes].
+ * [disponivelCentavos] já desconta as outras despesas do mês (não esta).
+ */
+data class AvisoVale(
+    val mes: YearMonth,
+    val possuiCredito: Boolean,
+    val disponivelCentavos: Long,
+    val saldoAposCentavos: Long,
+) {
+    val ficaraNegativo: Boolean get() = saldoAposCentavos < 0
+}
+
 /** Em qual fatura a compra entra e, no parcelado, quanto fica cada parcela. */
 data class PreviaFatura(
     val mes: YearMonth,
@@ -79,7 +94,9 @@ class DespesaFormViewModel @Inject constructor(
     private val despesaRepository: DespesaRepository,
     private val cartaoRepository: CartaoRepository,
     categoriaRepository: CategoriaRepository,
+    rendaRepository: RendaRepository,
     private val calculadora: CalculadoraFatura,
+    private val calculadoraVale: CalculadoraValeAlimentacao,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -118,6 +135,32 @@ class DespesaFormViewModel @Inject constructor(
             parcelas = estado.totalParcelas.toIntOrNull()
                 ?.takeIf { estado.modalidade == ModalidadeCompra.PARCELADO && it in ValidadorDespesa.INTERVALO_PARCELAS }
                 ?.let { calculadora.dividirEmParcelas(estado.valorCentavos, it) },
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /**
+     * Só quando a forma é VR/VA. Mês considerado: o da cobrança na despesa única; nas demais,
+     * o mês atual (ou o de início, se ainda não começou). Todas as despesas do mês contam,
+     * pagas ou pendentes, como no painel.
+     */
+    val avisoVale: StateFlow<AvisoVale?> = combine(
+        _uiState,
+        rendaRepository.observarRendas(),
+        despesaRepository.observarDespesas(),
+    ) { estado, rendas, despesas ->
+        if (estado.emFatura || estado.formaPagamento != FormaPagamento.VALE_ALIMENTACAO) return@combine null
+        val mes = if (estado.recorrencia == Recorrencia.UNICA) {
+            estado.mesInicio
+        } else {
+            maxOf(estado.mesInicio, YearMonth.now(clock))
+        }
+        val outras = despesas.filter { it.id != estado.id }
+        val saldo = calculadoraVale.saldoNoMes(rendas, outras, emptyList(), mes)
+        AvisoVale(
+            mes = mes,
+            possuiCredito = saldo.creditos.isNotEmpty(),
+            disponivelCentavos = saldo.saldoCentavos,
+            saldoAposCentavos = saldo.saldoCentavos - estado.valorCentavos,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 

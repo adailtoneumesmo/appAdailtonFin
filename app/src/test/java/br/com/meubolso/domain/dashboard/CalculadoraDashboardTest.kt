@@ -6,6 +6,7 @@ import br.com.meubolso.domain.despesa.CalculadoraOcorrencias
 import br.com.meubolso.domain.model.Cartao
 import br.com.meubolso.domain.model.CompraCartao
 import br.com.meubolso.domain.model.DespesaFixa
+import br.com.meubolso.domain.model.FormaCalculoVale
 import br.com.meubolso.domain.model.FormaPagamento
 import br.com.meubolso.domain.model.ModalidadeCompra
 import br.com.meubolso.domain.model.ModoDiaRecebimento
@@ -15,6 +16,7 @@ import br.com.meubolso.domain.model.Renda
 import br.com.meubolso.domain.model.TipoRenda
 import br.com.meubolso.domain.model.VinculoPeriodo
 import br.com.meubolso.domain.renda.CalculadoraRecebimento
+import br.com.meubolso.domain.vale.CalculadoraValeAlimentacao
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -28,6 +30,7 @@ class CalculadoraDashboardTest {
         CalculadoraRecebimento(CalendarioDiasUteis()),
         CalculadoraOcorrencias(),
         CalculadoraFatura(),
+        CalculadoraValeAlimentacao(CalendarioDiasUteis(), CalculadoraOcorrencias()),
     )
 
     private val outubro = YearMonth.of(2026, 10)
@@ -254,5 +257,32 @@ class CalculadoraDashboardTest {
         assertEquals(listOf(1L), resumo.detalheSalario.despesas.map { it.despesa.id })
         assertEquals(listOf(2L), resumo.detalheVale.rendas.map { it.renda.id })
         assertTrue(resumo.detalheVale.despesas.isEmpty())
+    }
+
+    @Test
+    fun `vale alimentacao fica fora do saldo geral e tem carteira propria`() {
+        val vr = renda(2, TipoRenda.VALE_ALIMENTACAO, 2_000, dia = 25)
+            .copy(formaCalculoVale = FormaCalculoVale.VALOR_POR_DIA)
+        val resumo = resumir(
+            rendas = listOf(renda(1, TipoRenda.SALARIO, 500_000, dia = 5), vr),
+            despesas = listOf(
+                despesa(1, 100_000),
+                despesa(2, 15_000, vinculo = VinculoPeriodo.AUTOMATICO).copy(formaPagamento = FormaPagamento.VALE_ALIMENTACAO),
+            ),
+        )
+        assertEquals(500_000L, resumo.geral.rendaCentavos)
+        assertEquals(100_000L, resumo.geral.despesaCentavos)
+        // Outubro/2026: R$ 20,00 × 21 dias úteis de outubro
+        assertEquals(42_000L, resumo.valeAlimentacao.creditoCentavos)
+        assertEquals(15_000L, resumo.valeAlimentacao.gastoCentavos)
+        assertEquals(27_000L, resumo.valeAlimentacao.saldoCentavos)
+    }
+
+    @Test
+    fun `mes so com vale alimentacao possui lancamentos`() {
+        val vr = renda(1, TipoRenda.VALE_ALIMENTACAO, 60_000, dia = 1).copy(formaCalculoVale = FormaCalculoVale.VALOR_FIXO)
+        val resumo = resumir(rendas = listOf(vr))
+        assertTrue(resumo.possuiLancamentos)
+        assertEquals(0L, resumo.geral.rendaCentavos)
     }
 }

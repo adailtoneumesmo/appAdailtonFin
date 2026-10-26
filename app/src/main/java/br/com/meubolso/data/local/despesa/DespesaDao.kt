@@ -1,6 +1,7 @@
 package br.com.meubolso.data.local.despesa
 
 import androidx.room.Dao
+import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +18,9 @@ interface DespesaDao {
 
     @Upsert
     suspend fun salvar(despesa: DespesaFixaEntity)
+
+    @Insert
+    suspend fun inserir(despesa: DespesaFixaEntity): Long
 
     @Query("DELETE FROM despesas_fixas WHERE id = :id")
     suspend fun excluir(id: Long)

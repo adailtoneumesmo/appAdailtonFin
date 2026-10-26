@@ -6,9 +6,13 @@ package br.com.meubolso.domain.model
  */
 enum class Origem { SALARIO, VALE }
 
-/** Renda extra não tem período próprio; entra no mesmo bolso do salário. */
-val TipoRenda.origem: Origem
+/**
+ * Renda extra não tem período próprio; entra no mesmo bolso do salário.
+ * O VR/VA é uma carteira separada e não pertence a nenhuma origem (`null`).
+ */
+val TipoRenda.origem: Origem?
     get() = when (this) {
         TipoRenda.SALARIO, TipoRenda.RENDA_EXTRA -> Origem.SALARIO
         TipoRenda.VALE -> Origem.VALE
+        TipoRenda.VALE_ALIMENTACAO -> null
     }

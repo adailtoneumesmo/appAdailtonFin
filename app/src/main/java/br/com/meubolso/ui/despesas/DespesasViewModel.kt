@@ -8,6 +8,7 @@ import br.com.meubolso.domain.despesa.CalculadoraOcorrencias
 import br.com.meubolso.domain.model.Categoria
 import br.com.meubolso.domain.model.DespesaFixa
 import br.com.meubolso.domain.model.OcorrenciaDespesa
+import br.com.meubolso.domain.model.Recorrencia
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -76,8 +77,9 @@ class DespesasViewModel @Inject constructor(
             ocorrencias = ocorrencias.map {
                 OcorrenciaUi(it, categoriasPorId[it.despesa.categoriaId], it.vencida(hoje))
             },
+            // Despesas únicas (ex.: compras de mercado) só aparecem no próprio mês.
             semCobranca = despesas
-                .filter { it.id !in idsComCobranca }
+                .filter { it.id !in idsComCobranca && it.recorrencia != Recorrencia.UNICA }
                 .map { despesa ->
                     val motivo = when {
                         !despesa.ativa -> MotivoSemCobranca.INATIVA

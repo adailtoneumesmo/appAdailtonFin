@@ -14,6 +14,8 @@ import br.com.meubolso.domain.model.TipoRenda
 import br.com.meubolso.domain.model.VinculoPeriodo
 import br.com.meubolso.domain.model.origem
 import br.com.meubolso.domain.renda.CalculadoraRecebimento
+import br.com.meubolso.domain.vale.CalculadoraValeAlimentacao
+import br.com.meubolso.domain.vale.SaldoVale
 import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
@@ -81,6 +83,8 @@ data class ResumoDashboard(
     val detalheVale: DetalheOrigem = DetalheOrigem(),
     /** Parte de [salario] que veio de renda extra. */
     val rendaExtraCentavos: Long = 0,
+    /** Carteira do VR/VA: não entra em [geral]. */
+    val valeAlimentacao: SaldoVale = SaldoVale(),
 ) {
     val salario: Balanco get() = detalheSalario.balanco
 
@@ -88,18 +92,20 @@ data class ResumoDashboard(
 
     val geral: Balanco get() = salario + vale
 
-    val possuiLancamentos: Boolean get() = !detalheSalario.vazio || !detalheVale.vazio
+    val possuiLancamentos: Boolean get() = !detalheSalario.vazio || !detalheVale.vazio || !valeAlimentacao.vazio
 }
 
 class CalculadoraDashboard @Inject constructor(
     private val calculadoraRecebimento: CalculadoraRecebimento,
     private val calculadoraOcorrencias: CalculadoraOcorrencias,
     private val calculadoraFatura: CalculadoraFatura,
+    private val calculadoraVale: CalculadoraValeAlimentacao,
 ) {
 
     /**
      * Rendas ativas recebidas no [mes] contra todas as despesas do [mes] (pagas ou não) e as
-     * faturas de cartão que vencem nele, separadas por [Origem].
+     * faturas de cartão que vencem nele, separadas por [Origem]. O VR/VA (rendas e despesas
+     * pagas com ele) fica de fora das origens e é resumido à parte em [ResumoDashboard.valeAlimentacao].
      */
     fun resumir(
         rendas: List<Renda>,
@@ -110,13 +116,13 @@ class CalculadoraDashboard @Inject constructor(
         cartoes: List<Cartao> = emptyList(),
         compras: List<CompraCartao> = emptyList(),
     ): ResumoDashboard {
-        val ativas = rendas.filter { it.ativo }
+        val ativas = rendas.filter { it.ativo && it.tipo.origem != null }
         val recebidasNoMes = ativas
             .mapNotNull { renda ->
                 calculadoraRecebimento.dataNoMes(renda, mes, anteciparDiaNaoUtil)?.let { RendaNoMes(renda, it.prevista) }
             }
             .sortedBy { it.data }
-        val ocorrencias = calculadoraOcorrencias.ocorrenciasNoMes(despesas, pagamentos, mes)
+        val ocorrencias = calculadoraOcorrencias.ocorrenciasNoMes(despesas.filterNot { it.pagaComValeAlimentacao }, pagamentos, mes)
         val inicios = iniciosDePeriodo(ativas, mes, anteciparDiaNaoUtil)
         val faturas = faturasQueVencemNoMes(cartoes, compras, mes)
 
@@ -136,6 +142,7 @@ class CalculadoraDashboard @Inject constructor(
             rendaExtraCentavos = recebidasNoMes
                 .filter { it.renda.tipo == TipoRenda.RENDA_EXTRA }
                 .sumOf { it.renda.valorCentavos },
+            valeAlimentacao = calculadoraVale.saldoNoMes(rendas, despesas, pagamentos, mes),
         )
     }
 
@@ -162,7 +169,7 @@ class CalculadoraDashboard @Inject constructor(
         .flatMap { renda ->
             listOf(mes.minusMonths(1), mes).mapNotNull { m ->
                 calculadoraRecebimento.dataNoMes(renda, m, anteciparDiaNaoUtil)
-                    ?.let { InicioPeriodo(it.prevista, renda.tipo.origem) }
+                    ?.let { InicioPeriodo(it.prevista, checkNotNull(renda.tipo.origem)) }
             }
         }
 

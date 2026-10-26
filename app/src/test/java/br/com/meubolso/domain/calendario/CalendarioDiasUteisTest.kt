@@ -62,6 +62,40 @@ class CalendarioDiasUteisTest {
     }
 
     @Test
+    fun `novembro de 2026 tem 19 dias uteis`() {
+        // 21 dias de seg a sex, menos Finados (02/11, segunda) e Consciência Negra (20/11, sexta);
+        // Proclamação da República (15/11) cai em domingo.
+        assertEquals(19, calendario.quantidadeNoMes(YearMonth.of(2026, 11)))
+    }
+
+    @Test
+    fun `abril de 2026 desconta sexta-feira santa e tiradentes`() {
+        // 22 dias de seg a sex, menos 03/04 (Sexta-feira Santa) e 21/04 (Tiradentes, terça)
+        assertEquals(20, calendario.quantidadeNoMes(YearMonth.of(2026, 4)))
+    }
+
+    @Test
+    fun `mes sem feriados conta apenas seg a sex`() {
+        // Agosto/2026: começa num sábado, 21 dias de seg a sex, nenhum feriado nacional
+        assertEquals(21, calendario.quantidadeNoMes(YearMonth.of(2026, 8)))
+    }
+
+    @Test
+    fun `fevereiro de ano bissexto inclui o dia 29`() {
+        // Fevereiro/2028: 29 dias começando numa terça → 21 dias de seg a sex (29/02 é terça)
+        assertEquals(21, calendario.quantidadeNoMes(YearMonth.of(2028, 2)))
+        assertTrue(calendario.ehDiaUtil(LocalDate.of(2028, 2, 29)))
+    }
+
+    @Test
+    fun `fontes extras de feriados entram na contagem`() {
+        val carnaval2027 = FonteFeriados { ano -> setOf(FeriadosNacionais.pascoa(ano).minusDays(47)) }
+        val comCarnaval = CalendarioDiasUteis(listOf(FeriadosNacionais, carnaval2027))
+        // Carnaval 2027: terça 09/02
+        assertEquals(calendario.quantidadeNoMes(YearMonth.of(2027, 2)) - 1, comCarnaval.quantidadeNoMes(YearMonth.of(2027, 2)))
+    }
+
+    @Test
     fun `n maior que dias uteis do mes retorna ultimo dia util`() {
         // 28/02/2026 é sábado → último dia útil é 27/02
         assertEquals(LocalDate.of(2026, 2, 27), calendario.enesimoDiaUtil(YearMonth.of(2026, 2), 23))

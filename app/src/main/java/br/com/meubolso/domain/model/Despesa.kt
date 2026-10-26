@@ -3,7 +3,7 @@ package br.com.meubolso.domain.model
 import java.time.LocalDate
 import java.time.YearMonth
 
-enum class FormaPagamento { PIX, BOLETO, DEBITO_AUTOMATICO, CARTAO_CREDITO }
+enum class FormaPagamento { PIX, BOLETO, DEBITO_AUTOMATICO, CARTAO_CREDITO, VALE_ALIMENTACAO }
 
 /** Com qual renda a despesa será paga. */
 enum class VinculoPeriodo {
@@ -13,7 +13,8 @@ enum class VinculoPeriodo {
     VALE,
 }
 
-enum class Recorrencia { MENSAL, PARCELADA }
+/** [UNICA]: uma cobrança só, no [DespesaFixa.mesInicio] (ex.: compra de mercado). */
+enum class Recorrencia { MENSAL, PARCELADA, UNICA }
 
 data class Categoria(
     val id: Long = 0,
@@ -39,7 +40,10 @@ data class DespesaFixa(
     /** Mês da primeira cobrança (ou da 1ª parcela). */
     val mesInicio: YearMonth,
     val ativa: Boolean = true,
-)
+) {
+    /** Paga com o VR/VA: debita da carteira do vale, não do salário. */
+    val pagaComValeAlimentacao: Boolean get() = formaPagamento == FormaPagamento.VALE_ALIMENTACAO
+}
 
 /** Uma ocorrência mensal de despesa marcada como paga. */
 data class PagamentoDespesa(

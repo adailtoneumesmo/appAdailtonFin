@@ -33,8 +33,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import br.com.meubolso.R
+import br.com.meubolso.domain.model.FormaCalculoVale
 import br.com.meubolso.domain.model.ModoDiaRecebimento
 import br.com.meubolso.domain.model.Renda
+import br.com.meubolso.domain.model.TipoRenda
+import br.com.meubolso.ui.components.CardSaldoVale
 import br.com.meubolso.ui.components.LogoMeuBolso
 import br.com.meubolso.ui.components.rotulo
 import br.com.meubolso.util.Formatadores
@@ -69,6 +72,15 @@ fun RendasScreen(
                 modifier = Modifier.padding(padding),
             ) {
                 item { CardTotal(estado.totalMensalAtivoCentavos) }
+                estado.saldoVale?.let { saldo ->
+                    item {
+                        CardSaldoVale(
+                            saldo = saldo,
+                            titulo = stringResource(R.string.saldo_vale_titulo) + " · " +
+                                estado.mes?.let(Formatadores::mesAno).orEmpty(),
+                        )
+                    }
+                }
                 items(estado.itens, key = { it.renda.id }) { item ->
                     CardRenda(item, onClick = { onEditarRenda(item.renda.id) })
                 }
@@ -107,6 +119,17 @@ private fun CardRenda(item: RendaItemUi, onClick: () -> Unit) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                item.valorVale?.takeIf { renda.formaCalculoVale == FormaCalculoVale.VALOR_POR_DIA }?.let { valor ->
+                    Text(
+                        stringResource(
+                            R.string.rendas_valor_vale_mes,
+                            Formatadores.moeda(valor.totalCentavos),
+                            valor.mesDiasUteis?.minusMonths(1)?.let(Formatadores::mesAnoCompacto).orEmpty(),
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 Text(
                     text = when {
                         !renda.ativo -> stringResource(R.string.rendas_inativa)
@@ -122,7 +145,11 @@ private fun CardRenda(item: RendaItemUi, onClick: () -> Unit) {
             }
             Spacer(Modifier.width(12.dp))
             Text(
-                Formatadores.moeda(renda.valorCentavos),
+                if (renda.formaCalculoVale == FormaCalculoVale.VALOR_POR_DIA) {
+                    stringResource(R.string.rendas_valor_por_dia, Formatadores.moeda(renda.valorCentavos))
+                } else {
+                    Formatadores.moeda(renda.valorCentavos)
+                },
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -131,9 +158,10 @@ private fun CardRenda(item: RendaItemUi, onClick: () -> Unit) {
 }
 
 @Composable
-private fun descricaoDia(renda: Renda): String = when (renda.modoDia) {
-    ModoDiaRecebimento.DIA_FIXO -> stringResource(R.string.rendas_dia_fixo, renda.dia)
-    ModoDiaRecebimento.DIA_UTIL -> stringResource(R.string.rendas_dia_util, renda.dia)
+private fun descricaoDia(renda: Renda): String = when {
+    renda.tipo == TipoRenda.VALE_ALIMENTACAO -> stringResource(R.string.rendas_dia_disponibilizacao, renda.dia)
+    renda.modoDia == ModoDiaRecebimento.DIA_FIXO -> stringResource(R.string.rendas_dia_fixo, renda.dia)
+    else -> stringResource(R.string.rendas_dia_util, renda.dia)
 }
 
 @Composable

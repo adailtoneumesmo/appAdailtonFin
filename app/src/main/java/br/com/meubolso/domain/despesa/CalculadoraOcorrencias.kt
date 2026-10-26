@@ -11,8 +11,8 @@ import javax.inject.Inject
 class CalculadoraOcorrencias @Inject constructor() {
 
     /**
-     * Ocorrência da despesa no [mes], ou `null` se o mês for anterior ao início ou
-     * posterior à última parcela. Não considera o flag [DespesaFixa.ativa].
+     * Ocorrência da despesa no [mes], ou `null` se o mês for anterior ao início,
+     * posterior à última parcela ou, na despesa única, diferente do mês de início. Não considera o flag [DespesaFixa.ativa].
      */
     fun ocorrenciaNoMes(
         despesa: DespesaFixa,
@@ -23,6 +23,10 @@ class CalculadoraOcorrencias @Inject constructor() {
         if (indice < 0) return null
         val parcela = when (despesa.recorrencia) {
             Recorrencia.MENSAL -> null
+            Recorrencia.UNICA -> {
+                if (indice > 0) return null
+                null
+            }
             Recorrencia.PARCELADA -> {
                 val total = requireNotNull(despesa.totalParcelas) { "Despesa parcelada sem total de parcelas" }
                 if (indice >= total) return null

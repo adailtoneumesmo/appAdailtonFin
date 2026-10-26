@@ -73,6 +73,7 @@ fun DespesaFormScreen(
     val categorias by viewModel.categorias.collectAsStateWithLifecycle()
     val cartoes by viewModel.cartoes.collectAsStateWithLifecycle()
     val previa by viewModel.previaFatura.collectAsStateWithLifecycle()
+    val avisoVale by viewModel.avisoVale.collectAsStateWithLifecycle()
     var confirmarExclusao by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(estado.concluido) {
@@ -127,7 +128,7 @@ fun DespesaFormScreen(
             if (estado.emFatura) {
                 CamposCompraCartao(estado, categorias, cartoes, previa, viewModel, onGerenciarCategorias, onNovoCartao)
             } else {
-                CamposDespesaFixa(estado, categorias, viewModel, onGerenciarCategorias)
+                CamposDespesaFixa(estado, categorias, avisoVale, viewModel, onGerenciarCategorias)
             }
 
             Button(onClick = viewModel::salvar, modifier = Modifier.fillMaxWidth()) {
@@ -227,6 +228,7 @@ private fun CampoParcelas(estado: DespesaFormUiState, onValorChange: (String) ->
 private fun CamposDespesaFixa(
     estado: DespesaFormUiState,
     categorias: List<Categoria>,
+    avisoVale: AvisoVale?,
     viewModel: DespesaFormViewModel,
     onGerenciarCategorias: () -> Unit,
 ) {
@@ -264,18 +266,23 @@ private fun CamposDespesaFixa(
         modifier = Modifier.fillMaxWidth(),
     )
 
-    Text(stringResource(R.string.despesa_campo_vinculo), style = MaterialTheme.typography.labelLarge)
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-        VinculoPeriodo.entries.forEachIndexed { indice, vinculo ->
-            SegmentedButton(
-                selected = estado.vinculo == vinculo,
-                onClick = { viewModel.alterarVinculo(vinculo) },
-                shape = SegmentedButtonDefaults.itemShape(indice, VinculoPeriodo.entries.size),
-            ) { Text(stringResource(vinculo.rotulo)) }
+    // Paga com VR/VA: sai da carteira do vale, então "Pagar com" (salário/vale) não se aplica.
+    if (avisoVale != null) {
+        AvisoSaldoVale(avisoVale)
+    } else {
+        Text(stringResource(R.string.despesa_campo_vinculo), style = MaterialTheme.typography.labelLarge)
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+            VinculoPeriodo.entries.forEachIndexed { indice, vinculo ->
+                SegmentedButton(
+                    selected = estado.vinculo == vinculo,
+                    onClick = { viewModel.alterarVinculo(vinculo) },
+                    shape = SegmentedButtonDefaults.itemShape(indice, VinculoPeriodo.entries.size),
+                ) { Text(stringResource(vinculo.rotulo)) }
+            }
         }
-    }
-    if (estado.vinculo == VinculoPeriodo.AUTOMATICO) {
-        TextoAjuda(stringResource(R.string.despesa_vinculo_ajuda))
+        if (estado.vinculo == VinculoPeriodo.AUTOMATICO) {
+            TextoAjuda(stringResource(R.string.despesa_vinculo_ajuda))
+        }
     }
 
     Text(stringResource(R.string.despesa_campo_recorrencia), style = MaterialTheme.typography.labelLarge)
@@ -294,10 +301,10 @@ private fun CamposDespesaFixa(
 
     Text(
         stringResource(
-            if (estado.recorrencia == Recorrencia.PARCELADA) {
-                R.string.despesa_campo_mes_inicio_parcelada
-            } else {
-                R.string.despesa_campo_mes_inicio
+            when (estado.recorrencia) {
+                Recorrencia.PARCELADA -> R.string.despesa_campo_mes_inicio_parcelada
+                Recorrencia.UNICA -> R.string.despesa_campo_mes_unica
+                Recorrencia.MENSAL -> R.string.despesa_campo_mes_inicio
             },
         ),
         style = MaterialTheme.typography.labelLarge,
@@ -435,6 +442,22 @@ private fun CamposCompraCartao(
                 Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }
         }
+    }
+}
+
+/** Saldo do VR/VA do mês e aviso quando a despesa o deixa negativo (salvar continua permitido). */
+@Composable
+private fun AvisoSaldoVale(aviso: AvisoVale) {
+    val mes = Formatadores.mesAnoCompacto(aviso.mes)
+    when {
+        !aviso.possuiCredito && aviso.disponivelCentavos >= 0 ->
+            TextoAjuda(stringResource(R.string.despesa_vale_sem_credito, mes))
+        aviso.ficaraNegativo -> Text(
+            stringResource(R.string.despesa_vale_aviso_negativo, mes, Formatadores.moeda(-aviso.saldoAposCentavos)),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error,
+        )
+        else -> TextoAjuda(stringResource(R.string.despesa_vale_ajuda, mes, Formatadores.moeda(aviso.disponivelCentavos)))
     }
 }
 

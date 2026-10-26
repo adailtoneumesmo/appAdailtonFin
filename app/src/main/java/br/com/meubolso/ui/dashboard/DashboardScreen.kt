@@ -23,6 +23,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -51,6 +52,7 @@ import br.com.meubolso.domain.dashboard.DetalheOrigem
 import br.com.meubolso.domain.dashboard.FaixaConsumo
 import br.com.meubolso.domain.dashboard.ResumoDashboard
 import br.com.meubolso.domain.dashboard.SituacaoSaldo
+import br.com.meubolso.ui.components.CardSaldoVale
 import br.com.meubolso.ui.components.LogoMeuBolso
 import br.com.meubolso.ui.components.SeletorMes
 import br.com.meubolso.ui.theme.CoresMarca
@@ -66,13 +68,23 @@ fun DashboardScreen(
     onEditarRenda: (Long) -> Unit,
     onEditarDespesa: (Long) -> Unit,
     onAbrirFatura: (Long) -> Unit,
+    onConfiguracoes: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     val resumo = estado.resumo
 
     Scaffold(
-        topBar = { TopAppBar(title = { LogoMeuBolso() }) },
+        topBar = {
+            TopAppBar(
+                title = { LogoMeuBolso() },
+                actions = {
+                    IconButton(onClick = onConfiguracoes) {
+                        Icon(painterResource(R.drawable.ic_aba_configuracoes), contentDescription = stringResource(R.string.configuracoes_titulo))
+                    }
+                },
+            )
+        },
     ) { padding ->
         LazyColumn(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
@@ -103,6 +115,9 @@ fun DashboardScreen(
                         )
                     }
                     item { CardOrigem(titulo = R.string.dashboard_vale, detalhe = resumo.detalheVale, acoes = acoes) }
+                    if (!resumo.valeAlimentacao.vazio) {
+                        item { CardSaldoVale(resumo.valeAlimentacao) }
+                    }
                     item { CardGrafico(resumo) }
                 }
             }

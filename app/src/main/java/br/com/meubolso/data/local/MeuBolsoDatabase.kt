@@ -16,6 +16,9 @@ import br.com.meubolso.data.local.categoria.CategoriasPadrao
 import br.com.meubolso.data.local.despesa.DespesaDao
 import br.com.meubolso.data.local.despesa.DespesaFixaEntity
 import br.com.meubolso.data.local.despesa.PagamentoDespesaEntity
+import br.com.meubolso.data.local.listacompra.ItemListaCompraEntity
+import br.com.meubolso.data.local.listacompra.ListaCompraDao
+import br.com.meubolso.data.local.listacompra.ListaCompraEntity
 import br.com.meubolso.data.local.renda.RendaDao
 import br.com.meubolso.data.local.renda.RendaEntity
 
@@ -27,6 +30,7 @@ import br.com.meubolso.data.local.renda.RendaEntity
  * - v1: rendas
  * - v2: categorias (com as padrão), despesas_fixas e pagamentos_despesa
  * - v3: cartoes e compras_cartao
+ * - v4: rendas.forma_calculo_vale (VR/VA), listas_compra e itens_lista_compra
  */
 @Database(
     entities = [
@@ -36,12 +40,15 @@ import br.com.meubolso.data.local.renda.RendaEntity
         PagamentoDespesaEntity::class,
         CartaoEntity::class,
         CompraCartaoEntity::class,
+        ListaCompraEntity::class,
+        ItemListaCompraEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2, spec = MeuBolsoDatabase.Migracao1Para2::class),
         AutoMigration(from = 2, to = 3),
+        AutoMigration(from = 3, to = 4),
     ],
 )
 @TypeConverters(Conversores::class)
@@ -54,6 +61,8 @@ abstract class MeuBolsoDatabase : RoomDatabase() {
     abstract fun despesaDao(): DespesaDao
 
     abstract fun cartaoDao(): CartaoDao
+
+    abstract fun listaCompraDao(): ListaCompraDao
 
     /** Tabelas novas são criadas pelo Room; aqui só populamos as categorias padrão. */
     class Migracao1Para2 : AutoMigrationSpec {

@@ -27,4 +27,22 @@ class FormatadoresTest {
         assertEquals("Outubro 2026", Formatadores.mesAno(YearMonth.of(2026, 10)))
         assertEquals("Março 2027", Formatadores.mesAno(YearMonth.of(2027, 3)))
     }
+
+    @Test
+    fun `formata mes e ano compacto em minusculas`() {
+        assertEquals("novembro/2026", Formatadores.mesAnoCompacto(YearMonth.of(2026, 11)))
+    }
+
+    @Test
+    fun `formata decimal sem simbolo`() {
+        assertEquals("1.234,56", Formatadores.decimal(123_456))
+        assertEquals("0,00", Formatadores.decimal(0))
+    }
+
+    @Test
+    fun `texto do calculo do vale por dia`() {
+        val texto = "19 dias úteis em ${Formatadores.mesAnoCompacto(YearMonth.of(2026, 11))} × " +
+            "${normalizar(Formatadores.moeda(2_000))} = ${normalizar(Formatadores.moeda(38_000))}"
+        assertEquals("19 dias úteis em novembro/2026 × R$ 20,00 = R$ 380,00", texto)
+    }
 }

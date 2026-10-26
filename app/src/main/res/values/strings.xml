@@ -25,6 +25,7 @@
     <string name="tipo_renda_salario">Salário</string>
     <string name="tipo_renda_vale">Vale</string>
     <string name="tipo_renda_extra">Renda extra</string>
+    <string name="tipo_renda_vale_alimentacao">VR/VA</string>
 
     <!-- Rendas: formulário -->
     <string name="renda_form_titulo_nova">Nova renda</string>
@@ -47,6 +48,29 @@
     <string name="renda_excluir_titulo">Excluir renda?</string>
     <string name="renda_excluir_mensagem">\"%1$s\" será removida. Essa ação não pode ser desfeita.</string>
 
+    <!-- Vale Refeição/Alimentação -->
+    <string name="renda_campo_forma_calculo">Forma de cálculo</string>
+    <string name="forma_calculo_valor_fixo">Valor fixo</string>
+    <string name="forma_calculo_valor_por_dia">Valor por dia</string>
+    <string name="renda_campo_valor_mensal">Valor mensal recebido</string>
+    <string name="renda_campo_valor_diario">Valor diário</string>
+    <string name="renda_campo_dia_disponibilizacao">Dia de disponibilização (1 a 31)</string>
+    <string name="renda_vale_ajuda">O VR/VA é uma carteira separada: não soma no saldo do salário.</string>
+    <string name="renda_vale_previa_titulo">Valor de %1$s</string>
+    <plurals name="vale_calculo_por_dia">
+        <item quantity="one">%1$d dia útil em %2$s × %3$s = %4$s</item>
+        <item quantity="other">%1$d dias úteis em %2$s × %3$s = %4$s</item>
+    </plurals>
+    <string name="vale_calculo_dias_uteis_ajuda">Dias úteis = segunda a sexta, sem feriados nacionais.</string>
+    <string name="rendas_valor_por_dia">%1$s/dia</string>
+    <string name="rendas_valor_vale_mes">%1$s em %2$s</string>
+    <string name="rendas_dia_disponibilizacao">Disponível todo dia %1$d</string>
+    <string name="saldo_vale_titulo">Saldo VR/VA</string>
+    <string name="saldo_vale_credito">Crédito do mês</string>
+    <string name="saldo_vale_gasto">Gasto com VR/VA</string>
+    <string name="saldo_vale_disponivel">Saldo VR/VA</string>
+    <string name="saldo_vale_separado">Carteira separada: não entra no saldo geral.</string>
+
     <!-- Validações -->
     <string name="erro_campo_obrigatorio">Campo obrigatório</string>
     <string name="erro_valor_maior_zero">Informe um valor maior que zero</string>
@@ -56,6 +80,7 @@
     <string name="erro_parcelas_invalidas">Informe entre 2 e 360 parcelas</string>
     <string name="erro_nome_duplicado">Já existe uma categoria com esse nome</string>
     <string name="erro_valor_menor_que_parcelas">O valor precisa ser de pelo menos R$ 0,01 por parcela</string>
+    <string name="erro_quantidade_invalida">Quantidade inválida (ex.: 1 ou 1,5)</string>
 
     <!-- Configurações -->
     <string name="configuracoes_titulo">Configurações</string>
@@ -104,7 +129,7 @@
     <string name="aba_despesas">Despesas</string>
     <string name="aba_rendas">Rendas</string>
     <string name="aba_cartoes">Cartões</string>
-    <string name="aba_configuracoes">Configurações</string>
+    <string name="aba_compras">Compras</string>
 
     <!-- Seletor de mês -->
     <string name="mes_anterior">Mês anterior</string>
@@ -147,6 +172,10 @@
     <string name="despesa_campo_parcelas">Número de parcelas</string>
     <string name="despesa_campo_mes_inicio">Primeira cobrança</string>
     <string name="despesa_campo_mes_inicio_parcelada">Mês da 1ª parcela</string>
+    <string name="despesa_campo_mes_unica">Mês da cobrança</string>
+    <string name="despesa_vale_ajuda">Debitado do saldo do VR/VA de %1$s (disponível: %2$s).</string>
+    <string name="despesa_vale_aviso_negativo">Atenção: o saldo do VR/VA de %1$s ficará negativo em %2$s. Você ainda pode salvar.</string>
+    <string name="despesa_vale_sem_credito">Nenhum VR/VA cadastrado para %1$s. Cadastre em Rendas para acompanhar o saldo.</string>
     <string name="despesa_campo_ativa">Despesa ativa</string>
     <string name="despesa_excluir_titulo">Excluir despesa?</string>
     <string name="despesa_excluir_mensagem">\"%1$s\" e todo o histórico de pagamentos serão removidos. Para manter o histórico, desative a despesa.</string>
@@ -155,11 +184,13 @@
     <string name="forma_boleto">Boleto</string>
     <string name="forma_debito_automatico">Débito automático</string>
     <string name="forma_cartao_credito">Cartão de crédito</string>
+    <string name="forma_vale_alimentacao">Vale Refeição/Alimentação</string>
     <string name="vinculo_automatico">Automático</string>
     <string name="vinculo_salario">Salário</string>
     <string name="vinculo_vale">Vale</string>
     <string name="recorrencia_mensal">Mensal</string>
     <string name="recorrencia_parcelada">Parcelada</string>
+    <string name="recorrencia_unica">Única</string>
 
     <!-- Categorias -->
     <string name="categorias_titulo">Categorias</string>
@@ -247,4 +278,74 @@
     <string name="modalidade_a_vista">À vista</string>
     <string name="modalidade_parcelado">Parcelado</string>
     <string name="modalidade_fixo">Fixo</string>
+
+    <!-- Lista de compras: listas do mês -->
+    <string name="listas_titulo">Lista de Compras</string>
+    <string name="listas_nova">Nova lista</string>
+    <string name="listas_vazio_titulo">Nenhuma lista neste mês</string>
+    <string name="listas_vazio_descricao">Crie uma lista para planejar o mercado e acompanhar o gasto enquanto compra.</string>
+    <plurals name="listas_rodape_quantidade">
+        <item quantity="one">%1$d lista no mês</item>
+        <item quantity="other">%1$d listas no mês</item>
+    </plurals>
+    <string name="listas_rodape_total">Total das listas</string>
+    <string name="listas_total_itens">Itens</string>
+    <string name="listas_no_carrinho">No carrinho</string>
+    <string name="listas_desmarcados">Faltam</string>
+    <string name="listas_preco_total">Preço total</string>
+    <string name="listas_limite">Limite: %1$s</string>
+    <string name="listas_finalizada">Finalizada</string>
+    <string name="listas_abrir">Abrir</string>
+    <string name="listas_editar">Editar lista</string>
+    <string name="listas_duplicar">Duplicar para este mês</string>
+    <string name="listas_duplicada">Lista duplicada em %1$s.</string>
+    <string name="listas_excluir_titulo">Excluir lista?</string>
+    <string name="listas_excluir_mensagem">\"%1$s\" e todos os itens serão removidos. A despesa gerada, se houver, continua cadastrada.</string>
+
+    <!-- Lista de compras: cadastro -->
+    <string name="lista_form_titulo_nova">Nova lista</string>
+    <string name="lista_form_titulo_editar">Editar lista</string>
+    <string name="lista_campo_descricao">Descrição</string>
+    <string name="lista_campo_descricao_dica">Ex.: Mercado do mês</string>
+    <string name="lista_campo_data">Data</string>
+    <string name="lista_campo_limite">Limite de gasto (opcional)</string>
+    <string name="lista_usar_vale">Usar saldo do Vale Refeição/Alimentação</string>
+    <string name="lista_vale_projetado">Valor projetado do VR/VA de %1$s: %2$s</string>
+    <string name="lista_vale_disponivel">Saldo disponível do VR/VA de %1$s: %2$s (%3$s − %4$s já gastos)</string>
+    <string name="lista_vale_sem_credito">Nenhum VR/VA cadastrado para %1$s.</string>
+    <string name="lista_limite_do_vale">Limite preenchido com o saldo do VR/VA de %1$s. Você pode alterar.</string>
+
+    <!-- Lista de compras: itens -->
+    <string name="itens_campo_nome">Nome do item</string>
+    <string name="itens_campo_valor">Valor (R$)</string>
+    <string name="itens_campo_qtd">Qtd</string>
+    <string name="itens_adicionar">Adicionar item</string>
+    <string name="itens_coluna_nome">Nome do item</string>
+    <string name="itens_coluna_valor">R$</string>
+    <string name="itens_coluna_qtd">Qtd</string>
+    <string name="itens_coluna_total">Total</string>
+    <string name="itens_vazio">Adicione o primeiro item acima.</string>
+    <string name="itens_dica_excluir">Arraste um item para o lado para excluí-lo.</string>
+    <string name="itens_excluir_titulo">Excluir item?</string>
+    <string name="itens_excluir_mensagem">\"%1$s\" será removido da lista.</string>
+    <string name="itens_preco_total">Preço total da lista</string>
+    <string name="itens_preco_atual">Preço atual (carrinho)</string>
+    <string name="itens_ainda_tem">Ainda tem para gastar</string>
+    <string name="itens_acima_limite">Acima do limite em %1$s</string>
+    <string name="itens_finalizar">Finalizar compra</string>
+    <string name="itens_finalizada">Compra finalizada: a despesa já foi lançada.</string>
+
+    <!-- Lista de compras: finalizar -->
+    <string name="finalizar_titulo">Finalizar compra</string>
+    <string name="finalizar_valor">Valor da despesa</string>
+    <string name="finalizar_valor_carrinho">Itens no carrinho (%1$s)</string>
+    <string name="finalizar_valor_total">Total da lista (%1$s)</string>
+    <string name="finalizar_categoria">Categoria</string>
+    <string name="finalizar_forma">Forma de pagamento</string>
+    <string name="finalizar_cartao">Cartão</string>
+    <string name="finalizar_sem_cartao">Nenhum cartão cadastrado.</string>
+    <string name="finalizar_confirmar">Gerar despesa</string>
+    <string name="finalizar_ajuda">Será lançada uma despesa única, já paga, com vencimento em %1$s.</string>
+    <string name="finalizar_ajuda_cartao">Será lançada uma compra à vista no cartão, com data de %1$s.</string>
+    <string name="finalizar_valor_zero">Não há valor para lançar: marque itens ou informe os preços.</string>
 </resources>

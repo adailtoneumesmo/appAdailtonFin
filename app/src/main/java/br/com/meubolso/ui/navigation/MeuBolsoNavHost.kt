@@ -33,6 +33,9 @@ import br.com.meubolso.ui.configuracoes.ConfiguracoesScreen
 import br.com.meubolso.ui.dashboard.DashboardScreen
 import br.com.meubolso.ui.despesas.DespesaFormScreen
 import br.com.meubolso.ui.despesas.DespesasScreen
+import br.com.meubolso.ui.listacompras.ListaCompraFormScreen
+import br.com.meubolso.ui.listacompras.ListaCompraItensScreen
+import br.com.meubolso.ui.listacompras.ListasCompraScreen
 import br.com.meubolso.ui.rendas.RendaFormScreen
 import br.com.meubolso.ui.rendas.RendasScreen
 
@@ -52,6 +55,9 @@ object Rotas {
     const val CARTAO_FORM = "cartoes/form?$ARG_ID={$ARG_ID}"
     const val FATURA = "cartoes/fatura?$ARG_ID={$ARG_ID}"
     const val CONFIGURACOES = "configuracoes"
+    const val LISTAS_COMPRA = "listas"
+    const val LISTA_COMPRA_FORM = "listas/form?$ARG_ID={$ARG_ID}"
+    const val LISTA_COMPRA_ITENS = "listas/itens?$ARG_ID={$ARG_ID}"
 
     fun despesaForm(id: Long? = null) = "despesas/form?$ARG_ID=${id ?: SEM_ID}"
 
@@ -64,6 +70,10 @@ object Rotas {
     fun cartaoForm(id: Long? = null) = "cartoes/form?$ARG_ID=${id ?: SEM_ID}"
 
     fun fatura(cartaoId: Long) = "cartoes/fatura?$ARG_ID=$cartaoId"
+
+    fun listaCompraForm(id: Long? = null) = "listas/form?$ARG_ID=${id ?: SEM_ID}"
+
+    fun listaCompraItens(id: Long) = "listas/itens?$ARG_ID=$id"
 
     val argumentoId = argumentoLong(ARG_ID)
 
@@ -81,7 +91,7 @@ enum class Aba(val rota: String, @StringRes val rotulo: Int, @DrawableRes val ic
     DESPESAS(Rotas.DESPESAS, R.string.aba_despesas, R.drawable.ic_aba_despesas),
     CARTOES(Rotas.CARTOES, R.string.aba_cartoes, R.drawable.ic_aba_cartoes),
     RENDAS(Rotas.RENDAS, R.string.aba_rendas, R.drawable.ic_aba_rendas),
-    CONFIGURACOES(Rotas.CONFIGURACOES, R.string.aba_configuracoes, R.drawable.ic_aba_configuracoes),
+    COMPRAS(Rotas.LISTAS_COMPRA, R.string.aba_compras, R.drawable.ic_aba_compras),
 }
 
 @Composable
@@ -123,6 +133,7 @@ fun MeuBolsoNavHost() {
                     onEditarRenda = { navController.navigate(Rotas.rendaForm(it)) },
                     onEditarDespesa = { navController.navigate(Rotas.despesaForm(it)) },
                     onAbrirFatura = { navController.navigate(Rotas.fatura(it)) },
+                    onConfiguracoes = { navController.navigate(Rotas.CONFIGURACOES) },
                 )
             }
             composable(Rotas.DESPESAS) {
@@ -169,7 +180,38 @@ fun MeuBolsoNavHost() {
                 RendaFormScreen(onVoltar = { navController.popBackStack() })
             }
             composable(Rotas.CONFIGURACOES) {
-                ConfiguracoesScreen(onCategorias = { navController.navigate(Rotas.CATEGORIAS) })
+                ConfiguracoesScreen(
+                    onVoltar = { navController.popBackStack() },
+                    onCategorias = { navController.navigate(Rotas.CATEGORIAS) },
+                )
+            }
+            composable(Rotas.LISTAS_COMPRA) {
+                ListasCompraScreen(
+                    onNovaLista = { navController.navigate(Rotas.listaCompraForm()) },
+                    onAbrirLista = { navController.navigate(Rotas.listaCompraItens(it)) },
+                    onEditarLista = { navController.navigate(Rotas.listaCompraForm(it)) },
+                )
+            }
+            composable(Rotas.LISTA_COMPRA_FORM, arguments = listOf(Rotas.argumentoId)) {
+                ListaCompraFormScreen(
+                    onVoltar = { navController.popBackStack() },
+                    // Lista nova abre direto nos itens; na edição só volta.
+                    onSalva = { id, nova ->
+                        if (nova) {
+                            navController.navigate(Rotas.listaCompraItens(id)) {
+                                popUpTo(Rotas.LISTA_COMPRA_FORM) { inclusive = true }
+                            }
+                        } else {
+                            navController.popBackStack()
+                        }
+                    },
+                )
+            }
+            composable(Rotas.LISTA_COMPRA_ITENS, arguments = listOf(Rotas.argumentoId)) {
+                ListaCompraItensScreen(
+                    onVoltar = { navController.popBackStack() },
+                    onEditarLista = { navController.navigate(Rotas.listaCompraForm(it)) },
+                )
             }
         }
     }

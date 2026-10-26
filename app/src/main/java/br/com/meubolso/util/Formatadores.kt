@@ -16,11 +16,23 @@ object Formatadores {
     /** "LLLL" = nome do mês na forma isolada ("outubro", não "de outubro"). */
     private val formatoMesAno = DateTimeFormatter.ofPattern("LLLL yyyy", LOCALE_BR)
 
+    private val formatoMesAnoCompacto = DateTimeFormatter.ofPattern("LLLL'/'yyyy", LOCALE_BR)
+
     /** 123456 → "R$ 1.234,56". NumberFormat não é thread-safe, por isso uma instância por chamada. */
     fun moeda(centavos: Long): String =
         NumberFormat.getCurrencyInstance(LOCALE_BR).format(BigDecimal.valueOf(centavos, 2))
 
+    /** 123456 → "1.234,56" (sem o símbolo, para células de tabela). */
+    fun decimal(centavos: Long): String =
+        NumberFormat.getNumberInstance(LOCALE_BR).apply {
+            minimumFractionDigits = 2
+            maximumFractionDigits = 2
+        }.format(BigDecimal.valueOf(centavos, 2))
+
     fun data(data: LocalDate): String = formatoData.format(data)
+
+    /** 2026-11 → "novembro/2026". */
+    fun mesAnoCompacto(mes: YearMonth): String = formatoMesAnoCompacto.format(mes)
 
     /** 2026-10 → "Outubro 2026". */
     fun mesAno(mes: YearMonth): String =
