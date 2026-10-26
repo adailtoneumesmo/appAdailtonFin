@@ -104,6 +104,11 @@
     <string name="dashboard_consumo">%1$d%% da renda consumida</string>
     <string name="dashboard_consumo_sem_renda">Despesas sem renda neste mês</string>
     <string name="dashboard_inclui_renda_extra">Inclui %1$s de renda extra</string>
+    <string name="dashboard_consumo_categoria">Consumo por categoria</string>
+    <string name="dashboard_sem_categoria">Sem categoria</string>
+    <string name="dashboard_percentual">%1$d%%</string>
+    <string name="dashboard_detalhar">Detalhar</string>
+    <string name="detalhe_mes_titulo">Detalhes do mês</string>
     <string name="dashboard_grafico_titulo">Renda x Despesa</string>
     <string name="dashboard_grafico_dica">Toque em uma barra para ver o valor</string>
     <string name="dashboard_vazio_titulo">Nenhum lançamento neste mês</string>

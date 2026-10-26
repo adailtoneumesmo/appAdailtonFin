@@ -3,6 +3,7 @@ package br.com.meubolso.domain.dashboard
 import br.com.meubolso.domain.cartao.CalculadoraFatura
 import br.com.meubolso.domain.despesa.CalculadoraOcorrencias
 import br.com.meubolso.domain.model.Cartao
+import br.com.meubolso.domain.model.Categoria
 import br.com.meubolso.domain.model.CompraCartao
 import br.com.meubolso.domain.model.DespesaFixa
 import br.com.meubolso.domain.model.Fatura
@@ -76,7 +77,19 @@ data class DetalheOrigem(
         )
 
     val vazio: Boolean get() = rendas.isEmpty() && despesas.isEmpty() && faturas.isEmpty()
+
+    /** Despesa por id de categoria; a fatura é aberta nas categorias das compras dela. */
+    val despesaPorCategoria: Map<Long, Long>
+        get() = (
+            despesas.map { it.despesa.categoriaId to it.despesa.valorCentavos } +
+                faturas.flatMap { fatura -> fatura.lancamentos.map { it.compra.categoriaId to it.valorCentavos } }
+            )
+            .groupBy({ it.first }, { it.second })
+            .mapValues { (_, valores) -> valores.sum() }
 }
+
+/** Quanto uma categoria consumiu no mês. [categoria] é `null` se ela não existir mais. */
+data class ConsumoCategoria(val categoria: Categoria?, val centavos: Long)
 
 data class ResumoDashboard(
     val detalheSalario: DetalheOrigem = DetalheOrigem(),
@@ -93,6 +106,19 @@ data class ResumoDashboard(
     val geral: Balanco get() = salario + vale
 
     val possuiLancamentos: Boolean get() = !detalheSalario.vazio || !detalheVale.vazio || !valeAlimentacao.vazio
+
+    /**
+     * Despesas de [geral] (salário + vale) agrupadas por categoria, da maior para a menor.
+     * Categorias cujo saldo ficou zerado ou negativo (estorno maior que as compras) ficam de fora.
+     */
+    fun consumoPorCategoria(categorias: List<Categoria>): List<ConsumoCategoria> {
+        val porId = categorias.associateBy { it.id }
+        return (detalheSalario.despesaPorCategoria.toList() + detalheVale.despesaPorCategoria.toList())
+            .groupBy({ it.first }, { it.second })
+            .map { (id, valores) -> ConsumoCategoria(porId[id], valores.sum()) }
+            .filter { it.centavos > 0 }
+            .sortedByDescending { it.centavos }
+    }
 }
 
 class CalculadoraDashboard @Inject constructor(

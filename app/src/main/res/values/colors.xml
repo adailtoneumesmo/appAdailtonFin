@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Paleta da marca (meu-bolso-logo) -->
-    <color name="marca_verde">#FF127A45</color>
-    <color name="marca_verde_escuro">#FF0E3B24</color>
-    <color name="marca_amarelo">#FFFFC533</color>
+    <!-- Paleta da marca (meu-bolso-logo-v2) -->
+    <color name="marca_tinta">#FF0E1512</color>
+    <color name="marca_limao">#FFC8F560</color>
+    <color name="marca_limao_escuro">#FF7CB518</color>
+    <color name="marca_claro">#FFF5F6FA</color>
     <color name="white">#FFFFFFFF</color>
 </resources>

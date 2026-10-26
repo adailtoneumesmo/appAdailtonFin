@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +33,7 @@ import br.com.meubolso.ui.cartoes.FaturaScreen
 import br.com.meubolso.ui.categorias.CategoriasScreen
 import br.com.meubolso.ui.configuracoes.ConfiguracoesScreen
 import br.com.meubolso.ui.dashboard.DashboardScreen
+import br.com.meubolso.ui.dashboard.DetalheMesScreen
 import br.com.meubolso.ui.despesas.DespesaFormScreen
 import br.com.meubolso.ui.despesas.DespesasScreen
 import br.com.meubolso.ui.listacompras.ListaCompraFormScreen
@@ -38,14 +41,17 @@ import br.com.meubolso.ui.listacompras.ListaCompraItensScreen
 import br.com.meubolso.ui.listacompras.ListasCompraScreen
 import br.com.meubolso.ui.rendas.RendaFormScreen
 import br.com.meubolso.ui.rendas.RendasScreen
+import java.time.YearMonth
 
 object Rotas {
     const val ARG_ID = "id"
     const val ARG_COMPRA_ID = "compraId"
     const val ARG_CARTAO_ID = "cartaoId"
+    const val ARG_MES = "mes"
     private const val SEM_ID = -1L
 
     const val DASHBOARD = "dashboard"
+    const val DETALHE_MES = "dashboard/detalhe?$ARG_MES={$ARG_MES}"
     const val DESPESAS = "despesas"
     const val DESPESA_FORM = "despesas/form?$ARG_ID={$ARG_ID}&$ARG_COMPRA_ID={$ARG_COMPRA_ID}&$ARG_CARTAO_ID={$ARG_CARTAO_ID}"
     const val CATEGORIAS = "categorias"
@@ -58,6 +64,15 @@ object Rotas {
     const val LISTAS_COMPRA = "listas"
     const val LISTA_COMPRA_FORM = "listas/form?$ARG_ID={$ARG_ID}"
     const val LISTA_COMPRA_ITENS = "listas/itens?$ARG_ID={$ARG_ID}"
+
+    /** [mes] vai como "2026-10" (ISO), lido de volta com [YearMonth.parse]. */
+    fun detalheMes(mes: YearMonth) = "dashboard/detalhe?$ARG_MES=$mes"
+
+    val argumentoMes = navArgument(ARG_MES) {
+        type = NavType.StringType
+        nullable = true
+        defaultValue = null
+    }
 
     fun despesaForm(id: Long? = null) = "despesas/form?$ARG_ID=${id ?: SEM_ID}"
 
@@ -111,6 +126,11 @@ fun MeuBolsoNavHost() {
                             onClick = { navController.navegarParaAba(aba) },
                             icon = { Icon(painterResource(aba.icone), contentDescription = null) },
                             label = { Text(stringResource(aba.rotulo)) },
+                            // Indicador limão da marca no lugar do cinza padrão.
+                            colors = NavigationBarItemDefaults.colors(
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            ),
                         )
                     }
                 }
@@ -130,10 +150,16 @@ fun MeuBolsoNavHost() {
                 DashboardScreen(
                     onNovaRenda = { navController.navigate(Rotas.rendaForm()) },
                     onNovaDespesa = { navController.navigate(Rotas.despesaForm()) },
+                    onDetalhar = { navController.navigate(Rotas.detalheMes(it)) },
+                    onConfiguracoes = { navController.navigate(Rotas.CONFIGURACOES) },
+                )
+            }
+            composable(Rotas.DETALHE_MES, arguments = listOf(Rotas.argumentoMes)) {
+                DetalheMesScreen(
+                    onVoltar = { navController.popBackStack() },
                     onEditarRenda = { navController.navigate(Rotas.rendaForm(it)) },
                     onEditarDespesa = { navController.navigate(Rotas.despesaForm(it)) },
                     onAbrirFatura = { navController.navigate(Rotas.fatura(it)) },
-                    onConfiguracoes = { navController.navigate(Rotas.CONFIGURACOES) },
                 )
             }
             composable(Rotas.DESPESAS) {

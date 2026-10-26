@@ -1,7 +1,7 @@
 <resources>
     <!-- Splash com a marca (API 31+); o tema base fica em values/themes.xml. -->
     <style name="Theme.MeuBolso" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowSplashScreenBackground">@color/marca_verde</item>
+        <item name="android:windowSplashScreenBackground">@color/marca_tinta</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
     </style>
 </resources>

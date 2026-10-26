@@ -4,6 +4,7 @@ import br.com.meubolso.domain.calendario.CalendarioDiasUteis
 import br.com.meubolso.domain.cartao.CalculadoraFatura
 import br.com.meubolso.domain.despesa.CalculadoraOcorrencias
 import br.com.meubolso.domain.model.Cartao
+import br.com.meubolso.domain.model.Categoria
 import br.com.meubolso.domain.model.CompraCartao
 import br.com.meubolso.domain.model.DespesaFixa
 import br.com.meubolso.domain.model.FormaCalculoVale
@@ -284,5 +285,34 @@ class CalculadoraDashboardTest {
         val resumo = resumir(rendas = listOf(vr))
         assertTrue(resumo.possuiLancamentos)
         assertEquals(0L, resumo.geral.rendaCentavos)
+    }
+
+    @Test
+    fun `consumo por categoria soma despesas e abre a fatura nas categorias das compras`() {
+        val moradia = Categoria(id = 1, nome = "Moradia", cor = 0)
+        val lazer = Categoria(id = 2, nome = "Lazer", cor = 0)
+        val transporte = Categoria(id = 3, nome = "Transporte", cor = 0)
+        val c = cartao(1, Origem.SALARIO)
+        val resumo = calculadora.resumir(
+            rendas = listOf(renda(1, TipoRenda.SALARIO, 500_000, dia = 5), renda(2, TipoRenda.VALE, 100_000, dia = 20)),
+            despesas = listOf(
+                despesa(1, 150_000, vinculo = VinculoPeriodo.SALARIO),
+                despesa(2, 20_000, vinculo = VinculoPeriodo.VALE).copy(categoriaId = 2),
+                // VR/VA fica fora do consumo, assim como fica fora do saldo geral.
+                despesa(3, 9_000).copy(categoriaId = 2, formaPagamento = FormaPagamento.VALE_ALIMENTACAO),
+            ),
+            pagamentos = emptyList(),
+            mes = outubro,
+            anteciparDiaNaoUtil = false,
+            cartoes = listOf(c),
+            compras = listOf(
+                compra(c, 30_000, LocalDate.of(2026, 10, 2), id = 1).copy(categoriaId = 2),
+                compra(c, 5_000, LocalDate.of(2026, 10, 3), id = 2).copy(categoriaId = 3),
+                // Estorno maior que a compra: a categoria some do gráfico.
+                compra(c, -8_000, LocalDate.of(2026, 10, 4), id = 3).copy(categoriaId = 3),
+            ),
+        )
+        val consumo = resumo.consumoPorCategoria(listOf(moradia, lazer, transporte))
+        assertEquals(listOf(moradia to 150_000L, lazer to 50_000L), consumo.map { it.categoria to it.centavos })
     }
 }

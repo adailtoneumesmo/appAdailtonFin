@@ -9,65 +9,74 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-/** Cores da marca (meu-bolso-logo). */
+/** Cores da marca (meu-bolso-logo-v2). */
 object CoresMarca {
-    val Verde = Color(0xFF127A45)
-    val VerdeEscuro = Color(0xFF0E3B24)
-    val Amarelo = Color(0xFFFFC533)
+    val Tinta = Color(0xFF0E1512)
+    val Limao = Color(0xFFC8F560)
+    val LimaoEscuro = Color(0xFF7CB518)
+    val Claro = Color(0xFFF5F6FA)
+
+    /** Faixa de alerta do consumo; fora da paleta da marca para não se confundir com o limão. */
+    val Alerta = Color(0xFFF2B705)
 }
 
+/**
+ * No tema claro o limão não tem contraste para texto, então [primary] (usado em valores
+ * positivos, botões e destaques) é um verde-limão escurecido; o limão fica nos containers.
+ */
 private val CoresClaras = lightColorScheme(
-    primary = CoresMarca.Verde,
+    primary = Color(0xFF3F6A00),
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFD2F5DF),
-    onPrimaryContainer = CoresMarca.VerdeEscuro,
-    secondary = CoresMarca.Amarelo,
-    onSecondary = CoresMarca.VerdeEscuro,
-    secondaryContainer = Color(0xFFFFEDB8),
-    onSecondaryContainer = Color(0xFF3D2E00),
-    tertiary = CoresMarca.VerdeEscuro,
-    onTertiary = Color.White,
+    primaryContainer = CoresMarca.Limao,
+    onPrimaryContainer = CoresMarca.Tinta,
+    secondary = CoresMarca.Tinta,
+    onSecondary = CoresMarca.Limao,
+    secondaryContainer = Color(0xFFE3E7EC),
+    onSecondaryContainer = CoresMarca.Tinta,
+    tertiary = CoresMarca.LimaoEscuro,
+    onTertiary = CoresMarca.Tinta,
     error = Color(0xFFBA1A1A),
-    background = Color(0xFFF7FBF7),
-    onBackground = Color(0xFF17201A),
-    surface = Color(0xFFF7FBF7),
-    onSurface = Color(0xFF17201A),
-    surfaceVariant = Color(0xFFDCE5DC),
-    onSurfaceVariant = Color(0xFF414941),
+    background = CoresMarca.Claro,
+    onBackground = CoresMarca.Tinta,
+    surface = CoresMarca.Claro,
+    onSurface = CoresMarca.Tinta,
+    surfaceVariant = Color(0xFFE1E4EA),
+    onSurfaceVariant = Color(0xFF4A524E),
     surfaceContainerLowest = Color.White,
-    surfaceContainerLow = Color(0xFFF1F5F1),
-    surfaceContainer = Color(0xFFEBF0EB),
-    surfaceContainerHigh = Color(0xFFE5EAE5),
-    surfaceContainerHighest = Color(0xFFDFE4DF),
-    outline = Color(0xFF717970),
-    outlineVariant = Color(0xFFC1C9C0),
+    surfaceContainerLow = Color(0xFFFBFBFD),
+    surfaceContainer = Color(0xFFEFF1F5),
+    surfaceContainerHigh = Color(0xFFE9EBF0),
+    // Card preenchido usa este tom: cards brancos sobre o fundo claro.
+    surfaceContainerHighest = Color.White,
+    outline = Color(0xFF78807C),
+    outlineVariant = Color(0xFFD3D7DE),
 )
 
 private val CoresEscuras = darkColorScheme(
-    primary = Color(0xFF7FD8A3),
-    onPrimary = Color(0xFF003920),
-    primaryContainer = CoresMarca.Verde,
-    onPrimaryContainer = Color(0xFFE6FFEE),
-    secondary = CoresMarca.Amarelo,
-    onSecondary = Color(0xFF3D2E00),
-    secondaryContainer = Color(0xFF5A4400),
-    onSecondaryContainer = Color(0xFFFFEDB8),
-    tertiary = Color(0xFFA6D1B6),
-    onTertiary = CoresMarca.VerdeEscuro,
+    primary = CoresMarca.Limao,
+    onPrimary = CoresMarca.Tinta,
+    primaryContainer = Color(0xFF2C4210),
+    onPrimaryContainer = Color(0xFFE4FBB0),
+    secondary = CoresMarca.Claro,
+    onSecondary = CoresMarca.Tinta,
+    secondaryContainer = Color(0xFF242E29),
+    onSecondaryContainer = CoresMarca.Claro,
+    tertiary = CoresMarca.LimaoEscuro,
+    onTertiary = CoresMarca.Tinta,
     error = Color(0xFFFFB4AB),
-    background = Color(0xFF0E1A13),
-    onBackground = Color(0xFFDDE5DD),
-    surface = Color(0xFF0E1A13),
-    onSurface = Color(0xFFDDE5DD),
-    surfaceVariant = Color(0xFF414941),
-    onSurfaceVariant = Color(0xFFC1C9C0),
-    surfaceContainerLowest = Color(0xFF09140E),
-    surfaceContainerLow = Color(0xFF16211A),
-    surfaceContainer = Color(0xFF1A251E),
-    surfaceContainerHigh = Color(0xFF243029),
-    surfaceContainerHighest = Color(0xFF2F3B33),
-    outline = Color(0xFF8B938A),
-    outlineVariant = Color(0xFF414941),
+    background = CoresMarca.Tinta,
+    onBackground = CoresMarca.Claro,
+    surface = CoresMarca.Tinta,
+    onSurface = CoresMarca.Claro,
+    surfaceVariant = Color(0xFF2A332F),
+    onSurfaceVariant = Color(0xFFB9C2BD),
+    surfaceContainerLowest = Color(0xFF0A100D),
+    surfaceContainerLow = Color(0xFF141C18),
+    surfaceContainer = Color(0xFF18211C),
+    surfaceContainerHigh = Color(0xFF1B2420),
+    surfaceContainerHighest = Color(0xFF1F2924),
+    outline = Color(0xFF87908B),
+    outlineVariant = Color(0xFF39433E),
 )
 
 /** Indica se o tema escuro está ativo (para escolher a versão negativa do logo). */
