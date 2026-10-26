@@ -229,6 +229,10 @@
     <string name="despesa_campo_valor_total">Valor total da compra</string>
     <string name="despesa_campo_valor_mensal">Valor mensal</string>
     <string name="despesa_campo_data_compra">Data da compra</string>
+    <string name="despesa_estorno">Estorno (crédito na fatura)</string>
+    <string name="despesa_estorno_ajuda">O valor é abatido do total da fatura.</string>
+    <string name="despesa_campo_valor_estorno">Valor do estorno</string>
+    <string name="fatura_estorno">Estorno</string>
     <string name="despesa_campo_modalidade">Forma de pagamento</string>
     <string name="despesa_parcelas_resumo">%1$d× de %2$s</string>
     <string name="despesa_parcelas_resumo_ultima">%1$d× de %2$s + última de %3$s</string>

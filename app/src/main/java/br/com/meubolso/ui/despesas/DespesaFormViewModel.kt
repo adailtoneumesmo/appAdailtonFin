@@ -33,6 +33,7 @@ import java.time.Clock
 import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
+import kotlin.math.abs
 
 data class DespesaFormUiState(
     val id: Long? = null,
@@ -52,6 +53,8 @@ data class DespesaFormUiState(
     val cartaoId: Long? = null,
     val dataCompra: LocalDate,
     val modalidade: ModalidadeCompra = ModalidadeCompra.A_VISTA,
+    /** Crédito na fatura: [valorCentavos] fica positivo no formulário e é gravado negativo. */
+    val estorno: Boolean = false,
     /** Só para compra fixa: `false` quando a recorrência foi encerrada. */
     val fixaAtiva: Boolean = true,
     val mesUltimaFatura: YearMonth? = null,
@@ -147,7 +150,8 @@ class DespesaFormViewModel @Inject constructor(
                         it.copy(
                             descricao = compra.descricao,
                             categoriaId = compra.categoriaId,
-                            valorCentavos = compra.valorCentavos,
+                            valorCentavos = abs(compra.valorCentavos),
+                            estorno = compra.estorno,
                             totalParcelas = compra.totalParcelas?.toString().orEmpty(),
                             cartaoId = compra.cartaoId,
                             dataCompra = compra.dataCompra,
@@ -195,6 +199,14 @@ class DespesaFormViewModel @Inject constructor(
 
     fun alterarModalidade(valor: ModalidadeCompra) =
         atualizar(CampoDespesa.PARCELAS, CampoDespesa.VALOR, CampoDespesa.ENCERRAMENTO) { copy(modalidade = valor) }
+
+    /** Estorno não é recorrente: se a compra estava como fixa, volta para à vista. */
+    fun alterarEstorno(valor: Boolean) = atualizar(CampoDespesa.ENCERRAMENTO) {
+        copy(
+            estorno = valor,
+            modalidade = if (valor && modalidade == ModalidadeCompra.FIXO) ModalidadeCompra.A_VISTA else modalidade,
+        )
+    }
 
     /** Ao encerrar, sugere como última a fatura aberta hoje (a cobrança deste mês ainda vale). */
     fun alterarFixaAtiva(valor: Boolean) = atualizar(CampoDespesa.ENCERRAMENTO) {
@@ -271,7 +283,7 @@ class DespesaFormViewModel @Inject constructor(
             cartaoId = checkNotNull(cartao).id,
             descricao = estado.descricao.trim(),
             categoriaId = checkNotNull(estado.categoriaId),
-            valorCentavos = estado.valorCentavos,
+            valorCentavos = if (estado.estorno) -estado.valorCentavos else estado.valorCentavos,
             dataCompra = estado.dataCompra,
             modalidade = estado.modalidade,
             totalParcelas = if (estado.modalidade == ModalidadeCompra.PARCELADO) parcelas else null,

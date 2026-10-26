@@ -30,7 +30,10 @@ class CalculadoraFatura @Inject constructor() {
         return if (data.isBefore(fechamento(cartao, mes))) mes else mes.plusMonths(1)
     }
 
-    /** Divide [totalCentavos] em [parcelas] iguais; a diferença de centavos fica na última. */
+    /**
+     * Divide [totalCentavos] em [parcelas] iguais; a diferença de centavos fica na última.
+     * Funciona também com total negativo (estorno parcelado).
+     */
     fun dividirEmParcelas(totalCentavos: Long, parcelas: Int): List<Long> {
         require(parcelas > 0) { "Quantidade de parcelas deve ser positiva" }
         val base = totalCentavos / parcelas

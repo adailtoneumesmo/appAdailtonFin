@@ -213,6 +213,35 @@ class CalculadoraFaturaTest {
         assertEquals(LocalDate.of(2026, 3, 17), fatura.vencimento)
     }
 
+    // Estorno
+
+    @Test
+    fun `estorno abate o total da fatura`() {
+        val c = cartao()
+        val compras = listOf(
+            compra(id = 1, valor = 12_000),
+            compra(id = 2, valor = -50, data = LocalDate.of(2026, 3, 7), descricao = "Estorno"),
+        )
+        val fatura = calculadora.fatura(c, compras, marco)
+        assertEquals(listOf(12_000L, -50L), fatura.lancamentos.map { it.valorCentavos })
+        assertEquals(11_950L, fatura.totalCentavos)
+        assertTrue(fatura.lancamentos.last().compra.estorno)
+    }
+
+    @Test
+    fun `estorno segue a mesma regra de fechamento`() {
+        val estorno = compra(valor = -50, data = LocalDate.of(2026, 3, 12))
+        assertNull(calculadora.lancamentoNaFatura(estorno, marco))
+        assertEquals(-50L, calculadora.lancamentoNaFatura(estorno, YearMonth.of(2026, 4))?.valorCentavos)
+    }
+
+    @Test
+    fun `estorno parcelado divide o credito com a diferenca na ultima`() {
+        assertEquals(listOf(-3_333L, -3_333L, -3_334L), calculadora.dividirEmParcelas(-10_000, 3))
+        val estorno = compra(valor = -10_000, modalidade = ModalidadeCompra.PARCELADO, parcelas = 3)
+        assertEquals(-3_334L, calculadora.lancamentoNaFatura(estorno, YearMonth.of(2026, 5))?.valorCentavos)
+    }
+
     @Test
     fun `fatura fecha no dia do fechamento`() {
         val fatura = calculadora.fatura(cartao(), emptyList(), marco)

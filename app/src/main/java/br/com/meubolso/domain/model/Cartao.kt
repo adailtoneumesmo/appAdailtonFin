@@ -26,7 +26,10 @@ data class CompraCartao(
     val cartaoId: Long,
     val descricao: String,
     val categoriaId: Long,
-    /** Valor total da compra; no parcelado é dividido entre as parcelas. Na fixa, é o valor mensal. */
+    /**
+     * Valor total da compra; no parcelado é dividido entre as parcelas. Na fixa, é o valor mensal.
+     * Negativo quando é estorno (crédito que abate a fatura).
+     */
     val valorCentavos: Long,
     val dataCompra: LocalDate,
     val modalidade: ModalidadeCompra,
@@ -39,7 +42,9 @@ data class CompraCartao(
     val mesPrimeiraFatura: YearMonth,
     /** Só para compra fixa: última fatura cobrada depois de encerrada. `null` = recorrência ativa. */
     val mesUltimaFatura: YearMonth? = null,
-)
+) {
+    val estorno: Boolean get() = valorCentavos < 0
+}
 
 /** A compra materializada em uma fatura específica. */
 data class LancamentoFatura(

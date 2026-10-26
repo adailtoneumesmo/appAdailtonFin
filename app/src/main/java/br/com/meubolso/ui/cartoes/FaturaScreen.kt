@@ -187,14 +187,24 @@ private fun CardLancamento(item: LancamentoUi, onClick: () -> Unit) {
                 }
             }
             Spacer(Modifier.width(8.dp))
-            Text(Formatadores.moeda(lancamento.valorCentavos), style = MaterialTheme.typography.titleMedium)
+            Text(
+                Formatadores.moeda(lancamento.valorCentavos),
+                style = MaterialTheme.typography.titleMedium,
+                color = if (compra.estorno) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            )
         }
     }
 }
 
-/** "Parcela 2/5 · faltam 3", "Parcela 5/5 · última", "Fixo" ou nada para compra à vista. */
+/** "Parcela 2/5 · faltam 3", "Parcela 5/5 · última", "Fixo" ou nada para compra à vista; estorno vem na frente. */
 @Composable
 private fun indicacao(lancamento: LancamentoFatura): String? {
+    val estorno = if (lancamento.compra.estorno) stringResource(R.string.fatura_estorno) else null
+    return listOfNotNull(estorno, indicacaoModalidade(lancamento)).joinToString(" · ").ifEmpty { null }
+}
+
+@Composable
+private fun indicacaoModalidade(lancamento: LancamentoFatura): String? {
     val recursos = LocalResources.current
     return when (lancamento.compra.modalidade) {
         ModalidadeCompra.A_VISTA -> null

@@ -351,13 +351,27 @@ private fun CamposCompraCartao(
 
     CampoCategoria(estado, categorias, viewModel::alterarCategoria, onGerenciarCategorias)
 
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Text(
+            stringResource(R.string.despesa_estorno),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+        )
+        Switch(checked = estado.estorno, onCheckedChange = viewModel::alterarEstorno)
+    }
+    if (estado.estorno) {
+        TextoAjuda(stringResource(R.string.despesa_estorno_ajuda))
+    }
+
+    // Estorno não tem recorrência fixa.
+    val modalidades = if (estado.estorno) ModalidadeCompra.entries - ModalidadeCompra.FIXO else ModalidadeCompra.entries
     Text(stringResource(R.string.despesa_campo_modalidade), style = MaterialTheme.typography.labelLarge)
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-        ModalidadeCompra.entries.forEachIndexed { indice, modalidade ->
+        modalidades.forEachIndexed { indice, modalidade ->
             SegmentedButton(
                 selected = estado.modalidade == modalidade,
                 onClick = { viewModel.alterarModalidade(modalidade) },
-                shape = SegmentedButtonDefaults.itemShape(indice, ModalidadeCompra.entries.size),
+                shape = SegmentedButtonDefaults.itemShape(indice, modalidades.size),
             ) { Text(stringResource(modalidade.rotulo)) }
         }
     }
@@ -366,10 +380,11 @@ private fun CamposCompraCartao(
         valorCentavos = estado.valorCentavos,
         onValorChange = viewModel::alterarValor,
         rotulo = stringResource(
-            when (estado.modalidade) {
-                ModalidadeCompra.A_VISTA -> R.string.despesa_campo_valor
-                ModalidadeCompra.PARCELADO -> R.string.despesa_campo_valor_total
-                ModalidadeCompra.FIXO -> R.string.despesa_campo_valor_mensal
+            when {
+                estado.estorno -> R.string.despesa_campo_valor_estorno
+                estado.modalidade == ModalidadeCompra.PARCELADO -> R.string.despesa_campo_valor_total
+                estado.modalidade == ModalidadeCompra.FIXO -> R.string.despesa_campo_valor_mensal
+                else -> R.string.despesa_campo_valor
             },
         ),
         erro = estado.erroDe(CampoDespesa.VALOR),
