@@ -52,3 +52,6 @@ app.*.map.json
 .gradle/
 .kotlin/
 local.properties
+
+# Firebase: chave do projeto fica só local (repositório público)
+app/google-services.json

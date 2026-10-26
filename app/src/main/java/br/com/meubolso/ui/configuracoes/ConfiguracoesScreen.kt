@@ -31,6 +31,8 @@ import br.com.meubolso.ui.components.LogoMeuBolso
 fun ConfiguracoesScreen(
     onVoltar: () -> Unit,
     onCategorias: () -> Unit,
+    onNotificacoes: () -> Unit,
+    onConta: () -> Unit,
     viewModel: ConfiguracoesViewModel = hiltViewModel(),
 ) {
     val antecipar by viewModel.anteciparDiaNaoUtil.collectAsStateWithLifecycle()
@@ -55,6 +57,13 @@ fun ConfiguracoesScreen(
                     .padding(vertical = 24.dp),
             )
             ListItem(
+                headlineContent = { Text(stringResource(R.string.config_conta_titulo)) },
+                supportingContent = { Text(stringResource(R.string.config_conta_descricao)) },
+                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+                modifier = Modifier.clickable(onClick = onConta),
+            )
+            HorizontalDivider()
+            ListItem(
                 headlineContent = { Text(stringResource(R.string.config_antecipar_titulo)) },
                 supportingContent = { Text(stringResource(R.string.config_antecipar_descricao)) },
                 trailingContent = {
@@ -67,6 +76,13 @@ fun ConfiguracoesScreen(
                 supportingContent = { Text(stringResource(R.string.config_categorias_descricao)) },
                 trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
                 modifier = Modifier.clickable(onClick = onCategorias),
+            )
+            HorizontalDivider()
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.config_notificacoes_titulo)) },
+                supportingContent = { Text(stringResource(R.string.config_notificacoes_descricao)) },
+                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+                modifier = Modifier.clickable(onClick = onNotificacoes),
             )
         }
     }

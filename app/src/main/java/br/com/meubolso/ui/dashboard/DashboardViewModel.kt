@@ -7,6 +7,7 @@ import br.com.meubolso.data.repository.CartaoRepository
 import br.com.meubolso.data.repository.CategoriaRepository
 import br.com.meubolso.data.repository.ConfiguracoesRepository
 import br.com.meubolso.data.repository.DespesaRepository
+import br.com.meubolso.data.repository.NotificacaoBancoRepository
 import br.com.meubolso.data.repository.RendaRepository
 import br.com.meubolso.domain.dashboard.CalculadoraDashboard
 import br.com.meubolso.domain.dashboard.ConsumoCategoria
@@ -44,6 +45,7 @@ class DashboardViewModel @Inject constructor(
     cartaoRepository: CartaoRepository,
     categoriaRepository: CategoriaRepository,
     configuracoesRepository: ConfiguracoesRepository,
+    notificacaoBancoRepository: NotificacaoBancoRepository,
     private val calculadora: CalculadoraDashboard,
     clock: Clock,
 ) : ViewModel() {
@@ -75,6 +77,10 @@ class DashboardViewModel @Inject constructor(
             consumoPorCategoria = resumo.consumoPorCategoria(categorias),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState(mes = mes.value))
+
+    /** Transações lidas das notificações aguardando confirmação. */
+    val quantidadePendentes: StateFlow<Int> = notificacaoBancoRepository.observarQuantidadePendentes()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     fun alterarMes(novo: YearMonth) {
         mes.value = novo

@@ -32,6 +32,7 @@ import br.com.meubolso.ui.cartoes.CartoesScreen
 import br.com.meubolso.ui.cartoes.FaturaScreen
 import br.com.meubolso.ui.categorias.CategoriasScreen
 import br.com.meubolso.ui.configuracoes.ConfiguracoesScreen
+import br.com.meubolso.ui.conta.ContaScreen
 import br.com.meubolso.ui.dashboard.DashboardScreen
 import br.com.meubolso.ui.dashboard.DetalheMesScreen
 import br.com.meubolso.ui.despesas.DespesaFormScreen
@@ -39,6 +40,7 @@ import br.com.meubolso.ui.despesas.DespesasScreen
 import br.com.meubolso.ui.listacompras.ListaCompraFormScreen
 import br.com.meubolso.ui.listacompras.ListaCompraItensScreen
 import br.com.meubolso.ui.listacompras.ListasCompraScreen
+import br.com.meubolso.ui.pendentes.PendentesScreen
 import br.com.meubolso.ui.rendas.RendaFormScreen
 import br.com.meubolso.ui.rendas.RendasScreen
 import java.time.YearMonth
@@ -48,12 +50,14 @@ object Rotas {
     const val ARG_COMPRA_ID = "compraId"
     const val ARG_CARTAO_ID = "cartaoId"
     const val ARG_MES = "mes"
+    const val ARG_PENDENTE_ID = "pendenteId"
     private const val SEM_ID = -1L
 
     const val DASHBOARD = "dashboard"
     const val DETALHE_MES = "dashboard/detalhe?$ARG_MES={$ARG_MES}"
     const val DESPESAS = "despesas"
-    const val DESPESA_FORM = "despesas/form?$ARG_ID={$ARG_ID}&$ARG_COMPRA_ID={$ARG_COMPRA_ID}&$ARG_CARTAO_ID={$ARG_CARTAO_ID}"
+    const val DESPESA_FORM =
+        "despesas/form?$ARG_ID={$ARG_ID}&$ARG_COMPRA_ID={$ARG_COMPRA_ID}&$ARG_CARTAO_ID={$ARG_CARTAO_ID}&$ARG_PENDENTE_ID={$ARG_PENDENTE_ID}"
     const val CATEGORIAS = "categorias"
     const val RENDAS = "rendas"
     const val RENDA_FORM = "rendas/form?$ARG_ID={$ARG_ID}"
@@ -64,6 +68,8 @@ object Rotas {
     const val LISTAS_COMPRA = "listas"
     const val LISTA_COMPRA_FORM = "listas/form?$ARG_ID={$ARG_ID}"
     const val LISTA_COMPRA_ITENS = "listas/itens?$ARG_ID={$ARG_ID}"
+    const val PENDENTES = "pendentes"
+    const val CONTA = "conta"
 
     /** [mes] vai como "2026-10" (ISO), lido de volta com [YearMonth.parse]. */
     fun detalheMes(mes: YearMonth) = "dashboard/detalhe?$ARG_MES=$mes"
@@ -80,6 +86,9 @@ object Rotas {
     fun compraForm(compraId: Long? = null, cartaoId: Long? = null) =
         "despesas/form?$ARG_COMPRA_ID=${compraId ?: SEM_ID}&$ARG_CARTAO_ID=${cartaoId ?: SEM_ID}"
 
+    /** Lança a transação lida de uma notificação: o usuário escolhe entre despesa e fatura. */
+    fun confirmarPendente(pendenteId: Long) = "despesas/form?$ARG_PENDENTE_ID=$pendenteId"
+
     fun rendaForm(id: Long? = null) = "rendas/form?$ARG_ID=${id ?: SEM_ID}"
 
     fun cartaoForm(id: Long? = null) = "cartoes/form?$ARG_ID=${id ?: SEM_ID}"
@@ -92,7 +101,8 @@ object Rotas {
 
     val argumentoId = argumentoLong(ARG_ID)
 
-    val argumentosDespesaForm = listOf(argumentoId, argumentoLong(ARG_COMPRA_ID), argumentoLong(ARG_CARTAO_ID))
+    val argumentosDespesaForm =
+        listOf(argumentoId, argumentoLong(ARG_COMPRA_ID), argumentoLong(ARG_CARTAO_ID), argumentoLong(ARG_PENDENTE_ID))
 
     private fun argumentoLong(nome: String) = navArgument(nome) {
         type = NavType.LongType
@@ -152,6 +162,7 @@ fun MeuBolsoNavHost() {
                     onNovaDespesa = { navController.navigate(Rotas.despesaForm()) },
                     onDetalhar = { navController.navigate(Rotas.detalheMes(it)) },
                     onConfiguracoes = { navController.navigate(Rotas.CONFIGURACOES) },
+                    onPendentes = { navController.navigate(Rotas.PENDENTES) },
                 )
             }
             composable(Rotas.DETALHE_MES, arguments = listOf(Rotas.argumentoMes)) {
@@ -209,6 +220,17 @@ fun MeuBolsoNavHost() {
                 ConfiguracoesScreen(
                     onVoltar = { navController.popBackStack() },
                     onCategorias = { navController.navigate(Rotas.CATEGORIAS) },
+                    onNotificacoes = { navController.navigate(Rotas.PENDENTES) },
+                    onConta = { navController.navigate(Rotas.CONTA) },
+                )
+            }
+            composable(Rotas.CONTA) {
+                ContaScreen(onVoltar = { navController.popBackStack() })
+            }
+            composable(Rotas.PENDENTES) {
+                PendentesScreen(
+                    onVoltar = { navController.popBackStack() },
+                    onLancar = { navController.navigate(Rotas.confirmarPendente(it)) },
                 )
             }
             composable(Rotas.LISTAS_COMPRA) {

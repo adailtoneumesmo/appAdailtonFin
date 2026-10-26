@@ -22,6 +22,17 @@
             </intent-filter>
         </activity>
 
+        <!-- Lê as notificações dos bancos; o usuário ativa em "Acesso a notificações". -->
+        <service
+            android:name=".notificacao.LeitorNotificacoesService"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
     </application>
 
 </manifest>

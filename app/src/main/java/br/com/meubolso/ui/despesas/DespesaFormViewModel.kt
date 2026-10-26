@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import br.com.meubolso.data.repository.CartaoRepository
 import br.com.meubolso.data.repository.CategoriaRepository
 import br.com.meubolso.data.repository.DespesaRepository
+import br.com.meubolso.data.repository.NotificacaoBancoRepository
 import br.com.meubolso.data.repository.RendaRepository
 import br.com.meubolso.domain.cartao.CalculadoraFatura
 import br.com.meubolso.domain.cartao.ValidadorCompraCartao
@@ -17,7 +18,9 @@ import br.com.meubolso.domain.model.CompraCartao
 import br.com.meubolso.domain.model.DespesaFixa
 import br.com.meubolso.domain.model.FormaPagamento
 import br.com.meubolso.domain.model.ModalidadeCompra
+import br.com.meubolso.domain.model.NotificacaoBanco
 import br.com.meubolso.domain.model.Recorrencia
+import br.com.meubolso.domain.model.TipoTransacao
 import br.com.meubolso.domain.model.VinculoPeriodo
 import br.com.meubolso.domain.vale.CalculadoraValeAlimentacao
 import br.com.meubolso.domain.validacao.ErroValidacao
@@ -28,11 +31,13 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.YearMonth
 import javax.inject.Inject
 import kotlin.math.abs
@@ -60,6 +65,10 @@ data class DespesaFormUiState(
     /** Só para compra fixa: `false` quando a recorrência foi encerrada. */
     val fixaAtiva: Boolean = true,
     val mesUltimaFatura: YearMonth? = null,
+    /** Lançamento vindo de uma notificação de banco: ao salvar, sai da caixa de pendentes. */
+    val pendenteId: Long? = null,
+    /** Texto original da notificação, para o usuário conferir. */
+    val textoNotificacao: String? = null,
     val erros: Map<CampoDespesa, ErroValidacao> = emptyMap(),
     val concluido: Boolean = false,
 ) {
@@ -93,6 +102,7 @@ class DespesaFormViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val despesaRepository: DespesaRepository,
     private val cartaoRepository: CartaoRepository,
+    private val notificacaoRepository: NotificacaoBancoRepository,
     categoriaRepository: CategoriaRepository,
     rendaRepository: RendaRepository,
     private val calculadora: CalculadoraFatura,
@@ -103,6 +113,7 @@ class DespesaFormViewModel @Inject constructor(
     private val idDespesa: Long? = savedStateHandle.get<Long>(Rotas.ARG_ID)?.takeIf { it > 0 }
     private val idCompra: Long? = savedStateHandle.get<Long>(Rotas.ARG_COMPRA_ID)?.takeIf { it > 0 }
     private val cartaoInicial: Long? = savedStateHandle.get<Long>(Rotas.ARG_CARTAO_ID)?.takeIf { it > 0 }
+    private val pendenteId: Long? = savedStateHandle.get<Long>(Rotas.ARG_PENDENTE_ID)?.takeIf { it > 0 }
 
     /** Compra como estava gravada, para preservar a fatura de origem na edição. */
     private var compraOriginal: CompraCartao? = null
@@ -115,6 +126,7 @@ class DespesaFormViewModel @Inject constructor(
             idCompra = idCompra,
             cartaoId = cartaoInicial,
             dataCompra = LocalDate.now(clock),
+            pendenteId = pendenteId,
         ),
     )
     val uiState: StateFlow<DespesaFormUiState> = _uiState.asStateFlow()
@@ -185,6 +197,9 @@ class DespesaFormViewModel @Inject constructor(
                 }
             }
         }
+        if (pendenteId != null) {
+            viewModelScope.launch { preencherComNotificacao(pendenteId) }
+        }
         if (idCompra != null) {
             viewModelScope.launch {
                 cartaoRepository.buscarCompra(idCompra)?.let { compra ->
@@ -207,6 +222,36 @@ class DespesaFormViewModel @Inject constructor(
             }
         }
     }
+
+    /**
+     * Pré-preenche com o que foi lido da notificação. Compra no cartão já abre como fatura
+     * (com o cartão selecionado, se houver só um); o resto, como despesa única já paga.
+     * O usuário pode trocar entre despesa e fatura antes de salvar.
+     */
+    private suspend fun preencherComNotificacao(id: Long) {
+        val notificacao = notificacaoRepository.buscar(id) ?: return
+        val data = LocalDateTime.ofInstant(notificacao.recebidaEm, clock.zone).toLocalDate()
+        val emFatura = notificacao.tipo == TipoTransacao.CARTAO && !notificacao.vale
+        val cartaoUnico = if (emFatura) cartaoRepository.observarCartoes().first().singleOrNull()?.id else null
+        _uiState.update {
+            it.copy(
+                descricao = notificacao.descricaoSugerida ?: notificacao.banco,
+                valorCentavos = notificacao.valorCentavos ?: 0,
+                dia = data.dayOfMonth.toString(),
+                formaPagamento = formaPagamentoSugerida(notificacao),
+                recorrencia = Recorrencia.UNICA,
+                mesInicio = YearMonth.from(data),
+                emFatura = emFatura,
+                cartaoId = cartaoUnico,
+                dataCompra = data,
+                textoNotificacao = listOf(notificacao.titulo, notificacao.texto).filter(String::isNotBlank).joinToString("\n"),
+            )
+        }
+    }
+
+    /** Compra no crédito vai para a fatura; como despesa, o padrão é Pix (o usuário ajusta). */
+    private fun formaPagamentoSugerida(notificacao: NotificacaoBanco): FormaPagamento =
+        if (notificacao.vale) FormaPagamento.VALE_ALIMENTACAO else FormaPagamento.PIX
 
     fun alterarDescricao(valor: String) = atualizar(CampoDespesa.DESCRICAO) { copy(descricao = valor) }
 
@@ -296,7 +341,12 @@ class DespesaFormViewModel @Inject constructor(
             ativa = estado.ativa,
         )
         viewModelScope.launch {
-            despesaRepository.salvar(despesa)
+            if (pendenteId != null) {
+                // A notificação é de algo já pago: a 1ª ocorrência entra como paga na data da compra.
+                notificacaoRepository.confirmarComDespesa(pendenteId, despesa, dataPagamento = estado.dataCompra)
+            } else {
+                despesaRepository.salvar(despesa)
+            }
             _uiState.update { it.copy(concluido = true) }
         }
     }
@@ -334,7 +384,11 @@ class DespesaFormViewModel @Inject constructor(
             mesUltimaFatura = ultima,
         )
         viewModelScope.launch {
-            cartaoRepository.salvarCompra(compra)
+            if (pendenteId != null) {
+                notificacaoRepository.confirmarComCompra(pendenteId, compra)
+            } else {
+                cartaoRepository.salvarCompra(compra)
+            }
             _uiState.update { it.copy(concluido = true) }
         }
     }

@@ -14,6 +14,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -86,7 +88,11 @@ fun DespesaFormScreen(
                 title = {
                     Text(
                         stringResource(
-                            if (estado.editando) R.string.despesa_form_titulo_editar else R.string.despesa_form_titulo_nova,
+                            when {
+                                estado.editando -> R.string.despesa_form_titulo_editar
+                                estado.pendenteId != null -> R.string.despesa_form_titulo_confirmar
+                                else -> R.string.despesa_form_titulo_nova
+                            },
                         ),
                     )
                 },
@@ -113,6 +119,17 @@ fun DespesaFormScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
         ) {
+            estado.textoNotificacao?.let { texto ->
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text(stringResource(R.string.despesa_notificacao_original), style = MaterialTheme.typography.labelMedium)
+                        Text(texto, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
             // Na edição o tipo não muda: despesa fixa e compra no cartão ficam em tabelas diferentes.
             if (!estado.editando) {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {

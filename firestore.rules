@@ -1,0 +1,55 @@
+rules_version = '2';
+
+// Regras do Meu Bolso. Publicar em: console do Firebase → Firestore Database → Regras.
+// Estrutura descrita em app/src/main/java/br/com/meubolso/data/remoto/Firestore.kt.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function logado() {
+      return request.auth != null;
+    }
+
+    function membro(orcamentoId) {
+      return logado()
+        && request.auth.uid in get(/databases/$(database)/documents/orcamentos/$(orcamentoId)).data.membros;
+    }
+
+    // Perfil: só o próprio usuário.
+    match /usuarios/{uid} {
+      allow read, write: if logado() && request.auth.uid == uid;
+    }
+
+    // Convite: quem tem o código lê (sem listar todos); só membros do orçamento criam.
+    match /convites/{codigo} {
+      allow get: if logado();
+      allow create: if logado()
+        && request.auth.uid in getAfter(/databases/$(database)/documents/orcamentos/$(request.resource.data.orcamentoId)).data.membros;
+    }
+
+    match /orcamentos/{orcamentoId} {
+      allow read: if membro(orcamentoId);
+
+      // Quem cria é o dono e único membro inicial.
+      allow create: if logado()
+        && request.resource.data.donoUid == request.auth.uid
+        && request.resource.data.membros == [request.auth.uid];
+
+      // Membros alteram nome e o aviso de alteração; membros, dono e código não mudam por aqui.
+      allow update: if membro(orcamentoId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'alteradoEm']);
+
+      // Entrar com o código: a pessoa só pode acrescentar a si mesma (e o próprio nome).
+      // O id do orçamento só é conhecido por quem leu o convite.
+      allow update: if logado()
+        && !(request.auth.uid in resource.data.membros)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['membros', 'nomesMembros'])
+        && request.resource.data.membros == resource.data.membros.concat([request.auth.uid])
+        && request.resource.data.nomesMembros.diff(resource.data.nomesMembros).affectedKeys().hasOnly([request.auth.uid]);
+
+      // Dados (uma coleção por tabela): só membros.
+      match /{tabela}/{uuid} {
+        allow read, write: if membro(orcamentoId);
+      }
+    }
+  }
+}

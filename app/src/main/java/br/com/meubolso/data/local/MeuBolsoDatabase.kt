@@ -19,8 +19,15 @@ import br.com.meubolso.data.local.despesa.PagamentoDespesaEntity
 import br.com.meubolso.data.local.listacompra.ItemListaCompraEntity
 import br.com.meubolso.data.local.listacompra.ListaCompraDao
 import br.com.meubolso.data.local.listacompra.ListaCompraEntity
+import br.com.meubolso.data.local.notificacao.NotificacaoBancoDao
+import br.com.meubolso.data.local.notificacao.NotificacaoBancoEntity
 import br.com.meubolso.data.local.renda.RendaDao
 import br.com.meubolso.data.local.renda.RendaEntity
+import br.com.meubolso.data.local.sincronizacao.ControleSincronizacaoEntity
+import br.com.meubolso.data.local.sincronizacao.CursorSincronizacaoEntity
+import br.com.meubolso.data.local.sincronizacao.GatilhosSincronizacao
+import br.com.meubolso.data.local.sincronizacao.RegistroSincronizacaoEntity
+import br.com.meubolso.data.local.sincronizacao.SincronizacaoDao
 
 /**
  * Toda alteração de esquema exige incrementar [version] e adicionar uma migração
@@ -31,6 +38,8 @@ import br.com.meubolso.data.local.renda.RendaEntity
  * - v2: categorias (com as padrão), despesas_fixas e pagamentos_despesa
  * - v3: cartoes e compras_cartao
  * - v4: rendas.forma_calculo_vale (VR/VA), listas_compra e itens_lista_compra
+ * - v5: notificacoes_banco (transações lidas das notificações, para confirmar)
+ * - v6: sync_registro, sync_cursor e sync_controle (sincronização com a nuvem) + gatilhos
  */
 @Database(
     entities = [
@@ -42,13 +51,19 @@ import br.com.meubolso.data.local.renda.RendaEntity
         CompraCartaoEntity::class,
         ListaCompraEntity::class,
         ItemListaCompraEntity::class,
+        NotificacaoBancoEntity::class,
+        RegistroSincronizacaoEntity::class,
+        CursorSincronizacaoEntity::class,
+        ControleSincronizacaoEntity::class,
     ],
-    version = 4,
+    version = 6,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2, spec = MeuBolsoDatabase.Migracao1Para2::class),
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
+        AutoMigration(from = 4, to = 5),
+        AutoMigration(from = 5, to = 6, spec = MeuBolsoDatabase.Migracao5Para6::class),
     ],
 )
 @TypeConverters(Conversores::class)
@@ -64,14 +79,30 @@ abstract class MeuBolsoDatabase : RoomDatabase() {
 
     abstract fun listaCompraDao(): ListaCompraDao
 
+    abstract fun notificacaoBancoDao(): NotificacaoBancoDao
+
+    abstract fun sincronizacaoDao(): SincronizacaoDao
+
     /** Tabelas novas são criadas pelo Room; aqui só populamos as categorias padrão. */
     class Migracao1Para2 : AutoMigrationSpec {
         override fun onPostMigrate(db: SupportSQLiteDatabase) = CategoriasPadrao.inserir(db)
     }
 
+    /** Tabelas de sincronização criadas pelo Room; aqui os gatilhos e o registro do que já existe (para subir). */
+    class Migracao5Para6 : AutoMigrationSpec {
+        override fun onPostMigrate(db: SupportSQLiteDatabase) {
+            GatilhosSincronizacao.instalar(db)
+            GatilhosSincronizacao.registrarExistentes(db)
+        }
+    }
+
     /** Instalação nova: o banco já nasce na versão atual, sem passar pelas migrações. */
     object AoCriar : Callback() {
-        override fun onCreate(db: SupportSQLiteDatabase) = CategoriasPadrao.inserir(db)
+        override fun onCreate(db: SupportSQLiteDatabase) {
+            GatilhosSincronizacao.instalar(db)
+            CategoriasPadrao.inserir(db)
+            GatilhosSincronizacao.fixarUuidsCategoriasPadrao(db)
+        }
     }
 
     companion object {

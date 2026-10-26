@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import br.com.meubolso.ui.conta.PortaoSessao
 import br.com.meubolso.ui.navigation.MeuBolsoNavHost
 import br.com.meubolso.ui.theme.MeuBolsoTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -15,7 +16,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MeuBolsoTheme {
-                MeuBolsoNavHost()
+                PortaoSessao {
+                    MeuBolsoNavHost()
+                }
             }
         }
     }

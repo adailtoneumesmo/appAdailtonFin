@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -63,10 +64,12 @@ fun DashboardScreen(
     onNovaDespesa: () -> Unit,
     onDetalhar: (YearMonth) -> Unit,
     onConfiguracoes: () -> Unit,
+    onPendentes: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     val resumo = estado.resumo
+    val pendentes by viewModel.quantidadePendentes.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -92,6 +95,9 @@ fun DashboardScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
+            if (pendentes > 0) {
+                item { CardPendentes(pendentes, onPendentes) }
+            }
             when {
                 estado.carregando -> Unit
                 !resumo.possuiLancamentos -> item { EstadoVazioMes(onNovaRenda, onNovaDespesa) }
@@ -103,6 +109,26 @@ fun DashboardScreen(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun CardPendentes(quantidade: Int, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    pluralStringResource(R.plurals.dashboard_pendentes, quantidade, quantidade),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(stringResource(R.string.dashboard_pendentes_descricao), style = MaterialTheme.typography.bodySmall)
+            }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
         }
     }
 }

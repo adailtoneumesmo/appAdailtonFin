@@ -3,6 +3,7 @@ package br.com.meubolso.util
 import java.math.BigDecimal
 import java.text.NumberFormat
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -12,6 +13,8 @@ object Formatadores {
     val LOCALE_BR: Locale = Locale.forLanguageTag("pt-BR")
 
     private val formatoData = DateTimeFormatter.ofPattern("dd/MM/yyyy", LOCALE_BR)
+
+    private val formatoDataHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", LOCALE_BR)
 
     /** "LLLL" = nome do mês na forma isolada ("outubro", não "de outubro"). */
     private val formatoMesAno = DateTimeFormatter.ofPattern("LLLL yyyy", LOCALE_BR)
@@ -30,6 +33,8 @@ object Formatadores {
         }.format(BigDecimal.valueOf(centavos, 2))
 
     fun data(data: LocalDate): String = formatoData.format(data)
+
+    fun dataHora(dataHora: LocalDateTime): String = formatoDataHora.format(dataHora)
 
     /** 2026-11 → "novembro/2026". */
     fun mesAnoCompacto(mes: YearMonth): String = formatoMesAnoCompacto.format(mes)

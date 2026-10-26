@@ -143,4 +143,82 @@ class MigracoesTest {
         }
         db.close()
     }
+
+    @Test
+    fun migracao4Para5_preservaDadosECriaNotificacoesBanco() {
+        helper.createDatabase(nomeBanco, 4).use { db ->
+            CategoriasPadrao.inserir(db)
+            db.execSQL(
+                """
+                INSERT INTO despesas_fixas (descricao, categoria_id, valor_centavos, dia_vencimento, forma_pagamento,
+                    vinculo, recorrencia, total_parcelas, mes_inicio, ativa)
+                VALUES ('Aluguel', 1, 150000, 5, 'BOLETO', 'SALARIO', 'MENSAL', NULL, '2026-01', 1)
+                """.trimIndent(),
+            )
+        }
+
+        // Valida o esquema resultante contra app/schemas/.../5.json
+        val db = helper.runMigrationsAndValidate(nomeBanco, 5, true, *MeuBolsoDatabase.MIGRACOES)
+
+        db.query("SELECT COUNT(*) FROM despesas_fixas").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(1, cursor.getInt(0))
+        }
+
+        // A mesma notificação republicada não vira duas pendências.
+        repeat(2) {
+            db.execSQL(
+                """
+                INSERT OR IGNORE INTO notificacoes_banco (chave, pacote, banco, titulo, texto, recebida_em_millis,
+                    valor_centavos, descricao_sugerida, tipo, vale, status)
+                VALUES ('k1', 'com.santander.app', 'Santander', 'Compra aprovada', 'R$ 45,90 em PADARIA',
+                    1793000000000, 4590, 'PADARIA', 'CARTAO', 0, 'PENDENTE')
+                """.trimIndent(),
+            )
+        }
+        db.query("SELECT COUNT(*) FROM notificacoes_banco").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(1, cursor.getInt(0))
+        }
+        db.close()
+    }
+
+    @Test
+    fun migracao5Para6_registraDadosExistentesParaSubirEInstalaGatilhos() {
+        helper.createDatabase(nomeBanco, 5).use { db ->
+            CategoriasPadrao.inserir(db)
+            db.execSQL("INSERT INTO cartoes (nome, dia_fechamento, dia_vencimento, fonte) VALUES ('Nubank', 1, 10, 'SALARIO')")
+            db.execSQL(
+                """
+                INSERT INTO notificacoes_banco (chave, pacote, banco, titulo, texto, recebida_em_millis,
+                    valor_centavos, descricao_sugerida, tipo, vale, status)
+                VALUES ('k1', 'com.itau', 'Itaú', '', 'R$ 1,00', 0, 100, NULL, 'PIX', 0, 'PENDENTE')
+                """.trimIndent(),
+            )
+        }
+
+        // Valida o esquema resultante contra app/schemas/.../6.json
+        val db = helper.runMigrationsAndValidate(nomeBanco, 6, true, *MeuBolsoDatabase.MIGRACOES)
+
+        // Tudo o que já existia fica pendente de envio; notificações de banco não sobem.
+        db.query("SELECT tabela, COUNT(*) FROM sync_registro WHERE pendente = 1 GROUP BY tabela ORDER BY tabela").use { cursor ->
+            val porTabela = buildMap { while (cursor.moveToNext()) put(cursor.getString(0), cursor.getInt(1)) }
+            assertEquals(mapOf("cartoes" to 1, "categorias" to CategoriasPadrao.LISTA.size), porTabela)
+        }
+        db.query("SELECT COUNT(*) FROM sync_registro WHERE uuid = 'categoria-padrao-moradia'").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(1, cursor.getInt(0))
+        }
+
+        // Gatilhos: exclusão vira pendência de envio sem id local.
+        db.execSQL("UPDATE sync_registro SET pendente = 0")
+        db.execSQL("DELETE FROM cartoes")
+        db.query("SELECT id_local, pendente, excluido FROM sync_registro WHERE tabela = 'cartoes'").use { cursor ->
+            cursor.moveToFirst()
+            assertTrue(cursor.isNull(0))
+            assertEquals(1, cursor.getInt(1))
+            assertEquals(1, cursor.getInt(2))
+        }
+        db.close()
+    }
 }

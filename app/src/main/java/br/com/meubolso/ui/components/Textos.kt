@@ -8,6 +8,7 @@ import br.com.meubolso.domain.model.ModalidadeCompra
 import br.com.meubolso.domain.model.Origem
 import br.com.meubolso.domain.model.Recorrencia
 import br.com.meubolso.domain.model.TipoRenda
+import br.com.meubolso.domain.model.TipoTransacao
 import br.com.meubolso.domain.model.VinculoPeriodo
 import br.com.meubolso.domain.validacao.ErroValidacao
 
@@ -80,4 +81,13 @@ val FormaCalculoVale.rotulo: Int
     get() = when (this) {
         FormaCalculoVale.VALOR_FIXO -> R.string.forma_calculo_valor_fixo
         FormaCalculoVale.VALOR_POR_DIA -> R.string.forma_calculo_valor_por_dia
+    }
+
+@get:StringRes
+val TipoTransacao.rotulo: Int
+    get() = when (this) {
+        TipoTransacao.CARTAO -> R.string.tipo_transacao_cartao
+        TipoTransacao.PIX -> R.string.tipo_transacao_pix
+        TipoTransacao.ENTRADA -> R.string.tipo_transacao_entrada
+        TipoTransacao.OUTRO -> R.string.tipo_transacao_outro
     }

@@ -11,7 +11,9 @@ import br.com.meubolso.data.local.cartao.CartaoDao
 import br.com.meubolso.data.local.categoria.CategoriaDao
 import br.com.meubolso.data.local.despesa.DespesaDao
 import br.com.meubolso.data.local.listacompra.ListaCompraDao
+import br.com.meubolso.data.local.notificacao.NotificacaoBancoDao
 import br.com.meubolso.data.local.renda.RendaDao
+import br.com.meubolso.data.local.sincronizacao.SincronizacaoDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -46,6 +48,12 @@ object DataModule {
 
     @Provides
     fun provideListaCompraDao(database: MeuBolsoDatabase): ListaCompraDao = database.listaCompraDao()
+
+    @Provides
+    fun provideNotificacaoBancoDao(database: MeuBolsoDatabase): NotificacaoBancoDao = database.notificacaoBancoDao()
+
+    @Provides
+    fun provideSincronizacaoDao(database: MeuBolsoDatabase): SincronizacaoDao = database.sincronizacaoDao()
 
     @Provides
     @Singleton
