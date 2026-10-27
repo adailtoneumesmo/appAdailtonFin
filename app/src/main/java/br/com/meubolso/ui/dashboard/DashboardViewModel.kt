@@ -8,6 +8,7 @@ import br.com.meubolso.data.repository.CategoriaRepository
 import br.com.meubolso.data.repository.ConfiguracoesRepository
 import br.com.meubolso.data.repository.DespesaRepository
 import br.com.meubolso.data.repository.NotificacaoBancoRepository
+import br.com.meubolso.data.repository.ObjetivoRepository
 import br.com.meubolso.data.repository.RendaRepository
 import br.com.meubolso.domain.dashboard.CalculadoraDashboard
 import br.com.meubolso.domain.dashboard.ConsumoCategoria
@@ -15,7 +16,9 @@ import br.com.meubolso.domain.dashboard.ResumoDashboard
 import br.com.meubolso.domain.model.Cartao
 import br.com.meubolso.domain.model.Categoria
 import br.com.meubolso.domain.model.CompraCartao
+import br.com.meubolso.domain.objetivo.ResumoObjetivos
 import br.com.meubolso.ui.navigation.Rotas
+import br.com.meubolso.ui.objetivos.observarResumo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,6 +49,7 @@ class DashboardViewModel @Inject constructor(
     categoriaRepository: CategoriaRepository,
     configuracoesRepository: ConfiguracoesRepository,
     notificacaoBancoRepository: NotificacaoBancoRepository,
+    objetivoRepository: ObjetivoRepository,
     private val calculadora: CalculadoraDashboard,
     clock: Clock,
 ) : ViewModel() {
@@ -81,6 +85,10 @@ class DashboardViewModel @Inject constructor(
     /** Transações lidas das notificações aguardando confirmação. */
     val quantidadePendentes: StateFlow<Int> = notificacaoBancoRepository.observarQuantidadePendentes()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    /** Soma dos objetivos; não depende do mês selecionado. Null até carregar. */
+    val resumoObjetivos: StateFlow<ResumoObjetivos?> = objetivoRepository.observarResumo(clock)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun alterarMes(novo: YearMonth) {
         mes.value = novo

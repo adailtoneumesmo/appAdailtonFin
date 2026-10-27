@@ -57,7 +57,11 @@ private const val ESPACO_GRAUS = 2f
  * Tocar numa fatia (ou na linha da legenda) destaca ela e mostra seus números no centro.
  */
 @Composable
-fun GraficoConsumo(fatias: List<FatiaGrafico>, modifier: Modifier = Modifier) {
+fun GraficoConsumo(
+    fatias: List<FatiaGrafico>,
+    modifier: Modifier = Modifier,
+    rotuloTotal: String = stringResource(R.string.dashboard_total_despesas),
+) {
     val total = fatias.sumOf { it.centavos }.coerceAtLeast(1L)
     var selecionada by remember(fatias) { mutableStateOf<Int?>(null) }
     val progresso = remember { Animatable(0f) }
@@ -121,7 +125,7 @@ fun GraficoConsumo(fatias: List<FatiaGrafico>, modifier: Modifier = Modifier) {
                     inicio += varredura
                 }
             }
-            CentroGrafico(fatias.getOrNull(selecionada ?: -1), total)
+            CentroGrafico(fatias.getOrNull(selecionada ?: -1), total, rotuloTotal)
         }
 
         Spacer(Modifier.height(16.dp))
@@ -137,10 +141,10 @@ fun GraficoConsumo(fatias: List<FatiaGrafico>, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun CentroGrafico(fatia: FatiaGrafico?, total: Long) {
+private fun CentroGrafico(fatia: FatiaGrafico?, total: Long, rotuloTotal: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(130.dp)) {
         Text(
-            fatia?.rotulo ?: stringResource(R.string.dashboard_total_despesas),
+            fatia?.rotulo ?: rotuloTotal,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

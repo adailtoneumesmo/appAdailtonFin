@@ -441,4 +441,40 @@
     <string name="conta_sair_pendentes_titulo">Alterações não enviadas</string>
     <string name="conta_sair_pendentes_texto">Algumas alterações ainda não foram para a nuvem (sem internet?). Se sair agora, elas serão perdidas.</string>
     <string name="conta_sair_mesmo_assim">Sair mesmo assim</string>
+
+    <!-- Objetivos -->
+    <string name="objetivos_titulo">Objetivos</string>
+    <string name="objetivos_novo">Novo objetivo</string>
+    <string name="objetivos_detalhar">Detalhar objetivos</string>
+    <string name="objetivos_meta_total">Meta total</string>
+    <string name="objetivos_realizado">Realizado</string>
+    <string name="objetivos_falta">Falta</string>
+    <string name="objetivos_progresso">%1$s de %2$s</string>
+    <string name="objetivos_percentual_atingido">%1$d%% atingido</string>
+    <string name="objetivos_faltam">Faltam %1$s</string>
+    <string name="objetivos_concluido">Objetivo alcançado</string>
+    <string name="objetivos_excedente">Você tem %1$s investidos além das suas metas.</string>
+    <string name="objetivos_ate">Até %1$s</string>
+    <string name="objetivos_por_mes">Guardar %1$s por mês</string>
+    <string name="objetivos_prazo_vencido">Prazo encerrado</string>
+    <string name="objetivos_editar">Editar objetivo</string>
+    <string name="objetivos_vazio_titulo">Defina um objetivo</string>
+    <string name="objetivos_vazio_descricao">Cadastre uma meta (ex.: reserva de emergência) e acompanhe quanto do seu patrimônio investido já chegou lá.</string>
+    <string name="objetivos_criar">Criar objetivo</string>
+    <string name="objetivos_patrimonio">Patrimônio investido</string>
+    <string name="objetivos_patrimonio_atualizado">Atualizado em %1$s</string>
+    <string name="objetivos_patrimonio_nao_informado">Informe quanto você tem investido hoje para ver o progresso.</string>
+    <string name="objetivos_patrimonio_informar">Informar valor</string>
+    <string name="objetivos_patrimonio_atualizar">Atualizar valor</string>
+    <string name="objetivos_patrimonio_ajuda">Some tudo o que você tem investido (corretoras, bancos, Tesouro). Você encontra o total na Área do Investidor da B3 ou nos apps das corretoras.</string>
+    <string name="objetivos_prioridade_ajuda">Todos os objetivos usam o mesmo patrimônio: ele é distribuído primeiro para o objetivo com a data mais próxima; os sem data ficam por último.</string>
+    <string name="objetivo_form_titulo_novo">Novo objetivo</string>
+    <string name="objetivo_form_titulo_editar">Editar objetivo</string>
+    <string name="objetivo_campo_nome">Nome</string>
+    <string name="objetivo_campo_nome_dica">Ex.: Reserva de emergência</string>
+    <string name="objetivo_campo_valor_alvo">Valor a alcançar</string>
+    <string name="objetivo_campo_data_alvo">Data-alvo (opcional)</string>
+    <string name="objetivo_campo_sem_data">Sem data definida</string>
+    <string name="objetivo_excluir_titulo">Excluir objetivo?</string>
+    <string name="objetivo_excluir_mensagem">\"%1$s\" será removido. Essa ação não pode ser desfeita.</string>
 </resources>

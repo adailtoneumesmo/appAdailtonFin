@@ -40,6 +40,8 @@ import br.com.meubolso.ui.despesas.DespesasScreen
 import br.com.meubolso.ui.listacompras.ListaCompraFormScreen
 import br.com.meubolso.ui.listacompras.ListaCompraItensScreen
 import br.com.meubolso.ui.listacompras.ListasCompraScreen
+import br.com.meubolso.ui.objetivos.ObjetivoFormScreen
+import br.com.meubolso.ui.objetivos.ObjetivosScreen
 import br.com.meubolso.ui.pendentes.PendentesScreen
 import br.com.meubolso.ui.rendas.RendaFormScreen
 import br.com.meubolso.ui.rendas.RendasScreen
@@ -70,6 +72,8 @@ object Rotas {
     const val LISTA_COMPRA_ITENS = "listas/itens?$ARG_ID={$ARG_ID}"
     const val PENDENTES = "pendentes"
     const val CONTA = "conta"
+    const val OBJETIVOS = "objetivos"
+    const val OBJETIVO_FORM = "objetivos/form?$ARG_ID={$ARG_ID}"
 
     /** [mes] vai como "2026-10" (ISO), lido de volta com [YearMonth.parse]. */
     fun detalheMes(mes: YearMonth) = "dashboard/detalhe?$ARG_MES=$mes"
@@ -98,6 +102,8 @@ object Rotas {
     fun listaCompraForm(id: Long? = null) = "listas/form?$ARG_ID=${id ?: SEM_ID}"
 
     fun listaCompraItens(id: Long) = "listas/itens?$ARG_ID=$id"
+
+    fun objetivoForm(id: Long? = null) = "objetivos/form?$ARG_ID=${id ?: SEM_ID}"
 
     val argumentoId = argumentoLong(ARG_ID)
 
@@ -163,7 +169,19 @@ fun MeuBolsoNavHost() {
                     onDetalhar = { navController.navigate(Rotas.detalheMes(it)) },
                     onConfiguracoes = { navController.navigate(Rotas.CONFIGURACOES) },
                     onPendentes = { navController.navigate(Rotas.PENDENTES) },
+                    onObjetivos = { navController.navigate(Rotas.OBJETIVOS) },
+                    onNovoObjetivo = { navController.navigate(Rotas.objetivoForm()) },
                 )
+            }
+            composable(Rotas.OBJETIVOS) {
+                ObjetivosScreen(
+                    onVoltar = { navController.popBackStack() },
+                    onNovoObjetivo = { navController.navigate(Rotas.objetivoForm()) },
+                    onEditarObjetivo = { navController.navigate(Rotas.objetivoForm(it)) },
+                )
+            }
+            composable(Rotas.OBJETIVO_FORM, arguments = listOf(Rotas.argumentoId)) {
+                ObjetivoFormScreen(onVoltar = { navController.popBackStack() })
             }
             composable(Rotas.DETALHE_MES, arguments = listOf(Rotas.argumentoMes)) {
                 DetalheMesScreen(

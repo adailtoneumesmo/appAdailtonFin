@@ -221,4 +221,20 @@ class MigracoesTest {
         }
         db.close()
     }
+
+    @Test
+    fun migracao6Para7_criaObjetivosComGatilhosDeSincronizacao() {
+        helper.createDatabase(nomeBanco, 6).close()
+
+        // Valida o esquema resultante contra app/schemas/.../7.json
+        val db = helper.runMigrationsAndValidate(nomeBanco, 7, true, *MeuBolsoDatabase.MIGRACOES)
+
+        db.execSQL("INSERT INTO objetivos (nome, valor_alvo_centavos, data_alvo) VALUES ('Reserva', 1000000, NULL)")
+        db.execSQL("INSERT INTO posicoes_investimento (valor_centavos, data_referencia) VALUES (250000, '2026-10-27')")
+        db.query("SELECT tabela FROM sync_registro WHERE pendente = 1 ORDER BY tabela").use { cursor ->
+            val tabelas = buildList { while (cursor.moveToNext()) add(cursor.getString(0)) }
+            assertEquals(listOf("objetivos", "posicoes_investimento"), tabelas)
+        }
+        db.close()
+    }
 }

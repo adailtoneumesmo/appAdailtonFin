@@ -26,6 +26,8 @@ object GatilhosSincronizacao {
         "compras_cartao",
         "listas_compra",
         "itens_lista_compra",
+        "objetivos",
+        "posicoes_investimento",
     )
 
     private const val AGORA = "CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER)"
@@ -33,7 +35,7 @@ object GatilhosSincronizacao {
     private const val ATIVOS = "COALESCE((SELECT aplicando FROM sync_controle WHERE id = 1), 0) = 0"
 
     fun instalar(db: SupportSQLiteDatabase) {
-        TABELAS.forEach { tabela ->
+        tabelasExistentes(db).forEach { tabela ->
             val marcar = """
                 INSERT OR IGNORE INTO sync_registro (uuid, tabela, id_local, atualizado_em, pendente, excluido)
                     VALUES ($NOVO_UUID, '$tabela', NEW.rowid, $AGORA, 1, 0);
@@ -56,7 +58,7 @@ object GatilhosSincronizacao {
 
     /** Registra as linhas que já existiam antes dos gatilhos, como pendentes de envio. */
     fun registrarExistentes(db: SupportSQLiteDatabase) {
-        TABELAS.forEach { tabela ->
+        tabelasExistentes(db).forEach { tabela ->
             db.execSQL(
                 """
                 INSERT OR IGNORE INTO sync_registro (uuid, tabela, id_local, atualizado_em, pendente, excluido)
@@ -65,6 +67,17 @@ object GatilhosSincronizacao {
             )
         }
         fixarUuidsCategoriasPadrao(db)
+    }
+
+    /**
+     * Numa migração em sequência (ex.: 5→6→7) as tabelas de versões futuras ainda não existem;
+     * os gatilhos delas são criados pela migração que as cria.
+     */
+    private fun tabelasExistentes(db: SupportSQLiteDatabase): List<String> {
+        val existentes = db.query("SELECT name FROM sqlite_master WHERE type = 'table'").use { c ->
+            buildSet { while (c.moveToNext()) add(c.getString(0)) }
+        }
+        return TABELAS.filter { it in existentes }
     }
 
     /**

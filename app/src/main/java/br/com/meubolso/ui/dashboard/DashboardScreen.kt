@@ -47,8 +47,11 @@ import br.com.meubolso.domain.dashboard.Balanco
 import br.com.meubolso.domain.dashboard.ConsumoCategoria
 import br.com.meubolso.domain.dashboard.FaixaConsumo
 import br.com.meubolso.domain.dashboard.SituacaoSaldo
+import br.com.meubolso.domain.objetivo.ResumoObjetivos
 import br.com.meubolso.ui.components.LogoMeuBolso
 import br.com.meubolso.ui.components.SeletorMes
+import br.com.meubolso.ui.objetivos.ResumoTotalObjetivos
+import br.com.meubolso.ui.objetivos.VazioObjetivos
 import br.com.meubolso.ui.theme.CoresMarca
 import br.com.meubolso.ui.theme.LocalTemaEscuro
 import br.com.meubolso.ui.theme.MeuBolsoTheme
@@ -65,11 +68,14 @@ fun DashboardScreen(
     onDetalhar: (YearMonth) -> Unit,
     onConfiguracoes: () -> Unit,
     onPendentes: () -> Unit,
+    onObjetivos: () -> Unit,
+    onNovoObjetivo: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     val resumo = estado.resumo
     val pendentes by viewModel.quantidadePendentes.collectAsStateWithLifecycle()
+    val objetivos by viewModel.resumoObjetivos.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -109,6 +115,9 @@ fun DashboardScreen(
                     )
                 }
             }
+            objetivos?.let { resumo ->
+                item { CardObjetivos(resumo, onObjetivos, onNovoObjetivo) }
+            }
         }
     }
 }
@@ -129,6 +138,34 @@ private fun CardPendentes(quantidade: Int, onClick: () -> Unit) {
                 Text(stringResource(R.string.dashboard_pendentes_descricao), style = MaterialTheme.typography.bodySmall)
             }
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+        }
+    }
+}
+
+@Composable
+private fun CardObjetivos(resumo: ResumoObjetivos, onDetalhar: () -> Unit, onNovoObjetivo: () -> Unit) {
+    Card(shape = MaterialTheme.shapes.extraLarge, modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(20.dp)) {
+            Text(stringResource(R.string.objetivos_titulo), style = MaterialTheme.typography.titleMedium)
+            if (resumo.itens.isEmpty()) {
+                VazioObjetivos(onNovoObjetivo)
+                return@Card
+            }
+            if (resumo.posicao == null) {
+                Text(
+                    stringResource(R.string.objetivos_patrimonio_nao_informado),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+            ResumoTotalObjetivos(resumo, Modifier.padding(top = 12.dp))
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = onDetalhar, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.objetivos_detalhar))
+                Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, Modifier.size(ButtonDefaults.IconSize))
+            }
         }
     }
 }
