@@ -1,12 +1,16 @@
 package br.com.meubolso.data.repository
 
 import br.com.meubolso.data.local.cartao.CartaoDao
+import br.com.meubolso.data.local.cartao.PagamentoFaturaEntity
 import br.com.meubolso.data.local.cartao.paraDominio
 import br.com.meubolso.data.local.cartao.paraEntity
 import br.com.meubolso.domain.model.Cartao
 import br.com.meubolso.domain.model.CompraCartao
+import br.com.meubolso.domain.model.PagamentoFatura
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.LocalDate
+import java.time.YearMonth
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,4 +43,13 @@ class CartaoRepository @Inject constructor(
     suspend fun salvarCompra(compra: CompraCartao) = dao.salvarCompra(compra.paraEntity())
 
     suspend fun excluirCompra(id: Long) = dao.excluirCompra(id)
+
+    fun observarPagamentosFatura(de: YearMonth, ate: YearMonth = de): Flow<List<PagamentoFatura>> =
+        dao.observarPagamentosFatura(de, ate).map { lista -> lista.map { it.paraDominio() } }
+
+    suspend fun marcarFaturaComoPaga(cartaoId: Long, mes: YearMonth, data: LocalDate) =
+        dao.salvarPagamentoFatura(PagamentoFaturaEntity(cartaoId, mes, data))
+
+    suspend fun marcarFaturaComoPendente(cartaoId: Long, mes: YearMonth) =
+        dao.excluirPagamentoFatura(cartaoId, mes)
 }

@@ -10,17 +10,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.annotation.StringRes
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
@@ -31,11 +37,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -47,6 +57,7 @@ import br.com.meubolso.ui.components.PontoCor
 import br.com.meubolso.ui.components.SeletorMes
 import br.com.meubolso.ui.components.rotulo
 import br.com.meubolso.util.Formatadores
+import java.time.LocalDate
 
 private val COR_SEM_CATEGORIA = 0xFF7D8A80.toInt()
 
@@ -55,9 +66,12 @@ private val COR_SEM_CATEGORIA = 0xFF7D8A80.toInt()
 fun DespesasScreen(
     onNovaDespesa: () -> Unit,
     onEditarDespesa: (Long) -> Unit,
+    onAbrirFatura: (Long) -> Unit,
     viewModel: DespesasViewModel = hiltViewModel(),
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
+    var salarioExpandido by rememberSaveable { mutableStateOf(false) }
+    var valeExpandido by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.despesas_titulo)) }) },
@@ -84,25 +98,30 @@ fun DespesasScreen(
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
-                item { CardResumo(estado) }
-                if (estado.ocorrencias.isEmpty()) {
-                    item {
-                        Text(
-                            stringResource(R.string.despesas_mes_vazio),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 24.dp),
-                        )
-                    }
-                }
-                items(estado.ocorrencias, key = { "o${it.ocorrencia.despesa.id}" }) { item ->
-                    CardOcorrencia(
-                        item = item,
-                        onClick = { onEditarDespesa(item.ocorrencia.despesa.id) },
-                        onAlternarPagamento = { viewModel.alternarPagamento(item.ocorrencia) },
+                secaoPeriodo(
+                    chave = "salario",
+                    titulo = R.string.despesas_periodo_salario,
+                    rotuloRenda = R.string.despesas_renda_salario,
+                    periodo = estado.salario,
+                    pagasExpandidas = salarioExpandido,
+                    onAlternarPagas = { salarioExpandido = !salarioExpandido },
+                    onEditarDespesa = onEditarDespesa,
+                    onAbrirFatura = onAbrirFatura,
+                    onAlternarPagamento = viewModel::alternarPagamento,
+                    onAlternarPagamentoFatura = viewModel::alternarPagamentoFatura,
+                )
+                if (!estado.vale.vazio) {
+                    secaoPeriodo(
+                        chave = "vale",
+                        titulo = R.string.despesas_periodo_vale,
+                        rotuloRenda = R.string.despesas_renda_vale,
+                        periodo = estado.vale,
+                        pagasExpandidas = valeExpandido,
+                        onAlternarPagas = { valeExpandido = !valeExpandido },
+                        onEditarDespesa = onEditarDespesa,
+                        onAbrirFatura = onAbrirFatura,
+                        onAlternarPagamento = viewModel::alternarPagamento,
+                        onAlternarPagamentoFatura = viewModel::alternarPagamentoFatura,
                     )
                 }
                 if (estado.semCobranca.isNotEmpty()) {
@@ -123,19 +142,116 @@ fun DespesasScreen(
     }
 }
 
+/** Resumo do período, despesas pendentes logo abaixo e as pagas recolhidas no fim. */
+private fun LazyListScope.secaoPeriodo(
+    chave: String,
+    @StringRes titulo: Int,
+    @StringRes rotuloRenda: Int,
+    periodo: PeriodoDespesasUi,
+    pagasExpandidas: Boolean,
+    onAlternarPagas: () -> Unit,
+    onEditarDespesa: (Long) -> Unit,
+    onAbrirFatura: (Long) -> Unit,
+    onAlternarPagamento: (OcorrenciaDespesa) -> Unit,
+    onAlternarPagamentoFatura: (FaturaUi) -> Unit,
+) {
+    item(key = "resumo_$chave") {
+        CardResumoPeriodo(titulo, rotuloRenda, periodo, Modifier.padding(top = 8.dp))
+    }
+    val vazio = when {
+        periodo.semLancamentos -> R.string.despesas_periodo_vazio
+        periodo.tudoPago -> R.string.despesas_tudo_pago
+        else -> null
+    }
+    if (vazio != null) {
+        item(key = "vazio_$chave") {
+            Text(
+                stringResource(vazio),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+            )
+        }
+    }
+    items(periodo.faturasPendentes, key = { "f${it.fatura.cartao.id}_${it.fatura.mes}" }) { item ->
+        CardFatura(
+            item = item,
+            onClick = { onAbrirFatura(item.fatura.cartao.id) },
+            onAlternarPagamento = { onAlternarPagamentoFatura(item) },
+        )
+    }
+    items(periodo.pendentes, key = { "o${it.ocorrencia.despesa.id}" }) { item ->
+        CardOcorrencia(
+            item = item,
+            onClick = { onEditarDespesa(item.ocorrencia.despesa.id) },
+            onAlternarPagamento = { onAlternarPagamento(item.ocorrencia) },
+        )
+    }
+    if (periodo.quantidadePagas > 0) {
+        item(key = "pagas_$chave") {
+            CabecalhoPagas(
+                quantidade = periodo.quantidadePagas,
+                totalCentavos = periodo.pagoCentavos,
+                expandido = pagasExpandidas,
+                onClick = onAlternarPagas,
+            )
+        }
+        if (pagasExpandidas) {
+            items(periodo.faturasPagas, key = { "fp${it.fatura.cartao.id}_${it.fatura.mes}" }) { item ->
+                CardFatura(
+                    item = item,
+                    onClick = { onAbrirFatura(item.fatura.cartao.id) },
+                    onAlternarPagamento = { onAlternarPagamentoFatura(item) },
+                )
+            }
+            items(periodo.pagas, key = { "p${it.ocorrencia.despesa.id}" }) { item ->
+                CardOcorrencia(
+                    item = item,
+                    onClick = { onEditarDespesa(item.ocorrencia.despesa.id) },
+                    onAlternarPagamento = { onAlternarPagamento(item.ocorrencia) },
+                )
+            }
+        }
+    }
+}
+
 @Composable
-private fun CardResumo(estado: DespesasUiState) {
+private fun CardResumoPeriodo(
+    @StringRes titulo: Int,
+    @StringRes rotuloRenda: Int,
+    periodo: PeriodoDespesasUi,
+    modifier: Modifier = Modifier,
+) {
+    val corSubtotal = if (periodo.subtotalCentavos < 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onPrimaryContainer
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.despesas_total_mes), style = MaterialTheme.typography.labelLarge)
-            Text(Formatadores.moeda(estado.totalCentavos), style = MaterialTheme.typography.headlineMedium)
+            Text(stringResource(titulo), style = MaterialTheme.typography.titleLarge)
+            Spacer(Modifier.height(12.dp))
+            LinhaValor(rotuloRenda, periodo.rendaCentavos)
+            LinhaValor(R.string.despesas_total_despesas, periodo.totalCentavos)
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    stringResource(R.string.despesas_subtotal),
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    Formatadores.moeda(periodo.subtotalCentavos),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = corSubtotal,
+                )
+            }
             Spacer(Modifier.height(12.dp))
             LinearProgressIndicator(
                 progress = {
-                    if (estado.totalCentavos == 0L) 0f else estado.pagoCentavos.toFloat() / estado.totalCentavos
+                    if (periodo.totalCentavos == 0L) 0f else periodo.pagoCentavos.toFloat() / periodo.totalCentavos
                 },
                 strokeCap = StrokeCap.Round,
                 modifier = Modifier
@@ -144,10 +260,18 @@ private fun CardResumo(estado: DespesasUiState) {
             )
             Spacer(Modifier.height(8.dp))
             Row(Modifier.fillMaxWidth()) {
-                ValorRotulado(R.string.despesas_pago, estado.pagoCentavos, Modifier.weight(1f))
-                ValorRotulado(R.string.despesas_pendente, estado.pendenteCentavos, Modifier.weight(1f), alinharFim = true)
+                ValorRotulado(R.string.despesas_pago, periodo.pagoCentavos, Modifier.weight(1f))
+                ValorRotulado(R.string.despesas_pendente, periodo.pendenteCentavos, Modifier.weight(1f), alinharFim = true)
             }
         }
+    }
+}
+
+@Composable
+private fun LinhaValor(@StringRes rotulo: Int, centavos: Long) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+        Text(stringResource(rotulo), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Text(Formatadores.moeda(centavos), style = MaterialTheme.typography.titleMedium)
     }
 }
 
@@ -185,7 +309,7 @@ private fun CardOcorrencia(item: OcorrenciaUi, onClick: () -> Unit, onAlternarPa
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    textoSituacao(ocorrencia, item.vencida),
+                    textoSituacao(ocorrencia.dataPagamento, ocorrencia.vencimento, item.vencida),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (item.vencida) corErro else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -197,24 +321,97 @@ private fun CardOcorrencia(item: OcorrenciaUi, onClick: () -> Unit, onAlternarPa
                     style = MaterialTheme.typography.titleMedium,
                     color = if (item.vencida) corErro else MaterialTheme.colorScheme.onSurface,
                 )
-                FilterChip(
-                    selected = ocorrencia.paga,
-                    onClick = onAlternarPagamento,
-                    label = {
-                        Text(
-                            stringResource(
-                                if (ocorrencia.paga) R.string.despesas_status_paga else R.string.despesas_status_pendente,
-                            ),
-                        )
-                    },
-                    leadingIcon = if (ocorrencia.paga) {
-                        { Icon(Icons.Default.Check, contentDescription = null, Modifier.height(FilterChipDefaults.IconSize)) }
-                    } else {
-                        null
-                    },
-                )
+                ChipPagamento(paga = ocorrencia.paga, onClick = onAlternarPagamento)
             }
         }
+    }
+}
+
+/** Fatura do cartão que vence no mês; entra no total pelo valor cheio. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CardFatura(item: FaturaUi, onClick: () -> Unit, onAlternarPagamento: () -> Unit) {
+    val fatura = item.fatura
+    val quantidade = fatura.lancamentos.size
+    val corErro = MaterialTheme.colorScheme.error
+    Card(
+        onClick = onClick,
+        colors = if (item.vencida) {
+            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+        } else {
+            CardDefaults.cardColors()
+        },
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)) {
+            Icon(Icons.Default.ShoppingCart, contentDescription = null)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.dashboard_fatura, fatura.cartao.nome), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    pluralStringResource(R.plurals.dashboard_fatura_lancamentos, quantidade, quantidade),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    textoSituacao(item.dataPagamento, fatura.vencimento, item.vencida),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (item.vencida) corErro else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    Formatadores.moeda(fatura.totalCentavos),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = if (item.vencida) corErro else MaterialTheme.colorScheme.onSurface,
+                )
+                ChipPagamento(paga = item.paga, onClick = onAlternarPagamento)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChipPagamento(paga: Boolean, onClick: () -> Unit) {
+    FilterChip(
+        selected = paga,
+        onClick = onClick,
+        label = {
+            Text(stringResource(if (paga) R.string.despesas_status_paga else R.string.despesas_status_pendente))
+        },
+        leadingIcon = if (paga) {
+            { Icon(Icons.Default.Check, contentDescription = null, Modifier.height(FilterChipDefaults.IconSize)) }
+        } else {
+            null
+        },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CabecalhoPagas(quantidade: Int, totalCentavos: Long, expandido: Boolean, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+    ) {
+        ListItem(
+            leadingContent = { Icon(Icons.Default.Check, contentDescription = null) },
+            headlineContent = { Text(stringResource(R.string.despesas_pagas_secao, quantidade)) },
+            supportingContent = { Text(Formatadores.moeda(totalCentavos)) },
+            trailingContent = {
+                Icon(
+                    if (expandido) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = stringResource(
+                        if (expandido) R.string.despesas_pagas_ocultar else R.string.despesas_pagas_mostrar,
+                    ),
+                )
+            },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        )
     }
 }
 
@@ -231,11 +428,10 @@ private fun subtitulo(item: OcorrenciaUi): String {
 }
 
 @Composable
-private fun textoSituacao(ocorrencia: OcorrenciaDespesa, vencida: Boolean): String = when {
-    ocorrencia.dataPagamento != null ->
-        stringResource(R.string.despesas_paga_em, Formatadores.data(ocorrencia.dataPagamento))
-    vencida -> stringResource(R.string.despesas_vencida_em, Formatadores.data(ocorrencia.vencimento))
-    else -> stringResource(R.string.despesas_vence_em, Formatadores.data(ocorrencia.vencimento))
+private fun textoSituacao(dataPagamento: LocalDate?, vencimento: LocalDate, vencida: Boolean): String = when {
+    dataPagamento != null -> stringResource(R.string.despesas_paga_em, Formatadores.data(dataPagamento))
+    vencida -> stringResource(R.string.despesas_vencida_em, Formatadores.data(vencimento))
+    else -> stringResource(R.string.despesas_vence_em, Formatadores.data(vencimento))
 }
 
 @Composable

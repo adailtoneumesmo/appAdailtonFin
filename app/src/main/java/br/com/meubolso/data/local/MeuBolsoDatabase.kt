@@ -10,6 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import br.com.meubolso.data.local.cartao.CartaoDao
 import br.com.meubolso.data.local.cartao.CartaoEntity
 import br.com.meubolso.data.local.cartao.CompraCartaoEntity
+import br.com.meubolso.data.local.cartao.PagamentoFaturaEntity
 import br.com.meubolso.data.local.categoria.CategoriaDao
 import br.com.meubolso.data.local.categoria.CategoriaEntity
 import br.com.meubolso.data.local.categoria.CategoriasPadrao
@@ -44,6 +45,7 @@ import br.com.meubolso.data.local.sincronizacao.SincronizacaoDao
  * - v5: notificacoes_banco (transações lidas das notificações, para confirmar)
  * - v6: sync_registro, sync_cursor e sync_controle (sincronização com a nuvem) + gatilhos
  * - v7: objetivos e posicoes_investimento (patrimônio investido), já sincronizados
+ * - v8: pagamentos_fatura (fatura de cartão paga/pendente), já sincronizada
  */
 @Database(
     entities = [
@@ -53,6 +55,7 @@ import br.com.meubolso.data.local.sincronizacao.SincronizacaoDao
         PagamentoDespesaEntity::class,
         CartaoEntity::class,
         CompraCartaoEntity::class,
+        PagamentoFaturaEntity::class,
         ListaCompraEntity::class,
         ItemListaCompraEntity::class,
         NotificacaoBancoEntity::class,
@@ -62,7 +65,7 @@ import br.com.meubolso.data.local.sincronizacao.SincronizacaoDao
         CursorSincronizacaoEntity::class,
         ControleSincronizacaoEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2, spec = MeuBolsoDatabase.Migracao1Para2::class),
@@ -71,6 +74,7 @@ import br.com.meubolso.data.local.sincronizacao.SincronizacaoDao
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 5, to = 6, spec = MeuBolsoDatabase.Migracao5Para6::class),
         AutoMigration(from = 6, to = 7, spec = MeuBolsoDatabase.Migracao6Para7::class),
+        AutoMigration(from = 7, to = 8, spec = MeuBolsoDatabase.Migracao7Para8::class),
     ],
 )
 @TypeConverters(Conversores::class)
@@ -107,6 +111,11 @@ abstract class MeuBolsoDatabase : RoomDatabase() {
 
     /** Tabelas novas nascem vazias: só faltam os gatilhos delas (instalar ignora os que já existem). */
     class Migracao6Para7 : AutoMigrationSpec {
+        override fun onPostMigrate(db: SupportSQLiteDatabase) = GatilhosSincronizacao.instalar(db)
+    }
+
+    /** pagamentos_fatura nasce vazia: só faltam os gatilhos dela. */
+    class Migracao7Para8 : AutoMigrationSpec {
         override fun onPostMigrate(db: SupportSQLiteDatabase) = GatilhosSincronizacao.instalar(db)
     }
 

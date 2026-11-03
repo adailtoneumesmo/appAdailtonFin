@@ -43,6 +43,7 @@ class ArmazemSincronizacao @Inject constructor(
     private val chavesNaturais = mapOf(
         "categorias" to listOf("nome"),
         "pagamentos_despesa" to listOf("despesa_id", "competencia"),
+        "pagamentos_fatura" to listOf("cartao_id", "mes"),
     )
 
     /** Dados da linha para enviar; `null` se ela não existe mais. */

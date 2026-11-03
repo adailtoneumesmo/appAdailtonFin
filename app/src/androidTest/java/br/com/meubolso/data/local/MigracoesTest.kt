@@ -237,4 +237,31 @@ class MigracoesTest {
         }
         db.close()
     }
+
+    @Test
+    fun migracao7Para8_criaPagamentosFaturaComGatilhosDeSincronizacao() {
+        helper.createDatabase(nomeBanco, 7).apply {
+            execSQL("INSERT INTO cartoes (id, nome, dia_fechamento, dia_vencimento, fonte) VALUES (1, 'Nubank', 3, 10, 'SALARIO')")
+            close()
+        }
+
+        // Valida o esquema resultante contra app/schemas/.../8.json
+        val db = helper.runMigrationsAndValidate(nomeBanco, 8, true, *MeuBolsoDatabase.MIGRACOES)
+
+        db.execSQL("UPDATE sync_registro SET pendente = 0")
+        db.execSQL("INSERT INTO pagamentos_fatura (cartao_id, mes, data_pagamento) VALUES (1, '2026-10', '2026-11-10')")
+        db.query("SELECT tabela FROM sync_registro WHERE pendente = 1").use { cursor ->
+            val tabelas = buildList { while (cursor.moveToNext()) add(cursor.getString(0)) }
+            assertEquals(listOf("pagamentos_fatura"), tabelas)
+        }
+
+        // Excluir o cartão leva junto o pagamento da fatura.
+        db.execSQL("PRAGMA foreign_keys = ON")
+        db.execSQL("DELETE FROM cartoes")
+        db.query("SELECT COUNT(*) FROM pagamentos_fatura").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(0, cursor.getInt(0))
+        }
+        db.close()
+    }
 }

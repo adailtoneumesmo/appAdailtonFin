@@ -195,6 +195,7 @@ fun MeuBolsoNavHost() {
                 DespesasScreen(
                     onNovaDespesa = { navController.navigate(Rotas.despesaForm()) },
                     onEditarDespesa = { navController.navigate(Rotas.despesaForm(it)) },
+                    onAbrirFatura = { navController.navigate(Rotas.fatura(it)) },
                 )
             }
             composable(Rotas.DESPESA_FORM, arguments = Rotas.argumentosDespesaForm) {

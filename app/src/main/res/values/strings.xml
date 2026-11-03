@@ -145,8 +145,6 @@
     <string name="despesas_nova">Nova despesa</string>
     <string name="despesas_vazio_titulo">Nenhuma despesa cadastrada</string>
     <string name="despesas_vazio_descricao">Cadastre aluguel, contas, assinaturas e parcelas para acompanhar o que já foi pago no mês.</string>
-    <string name="despesas_mes_vazio">Nenhuma despesa para este mês.</string>
-    <string name="despesas_total_mes">Total do mês</string>
     <string name="despesas_pago">Pago</string>
     <string name="despesas_pendente">Pendente</string>
     <string name="despesas_paga_em">Paga em %1$s</string>
@@ -156,6 +154,17 @@
     <string name="despesas_status_paga">Paga</string>
     <string name="despesas_status_pendente">Pendente</string>
     <string name="despesas_fora_do_mes">Sem cobrança neste mês</string>
+    <string name="despesas_tudo_pago">Tudo pago neste período!</string>
+    <string name="despesas_periodo_vazio">Nenhuma despesa neste período.</string>
+    <string name="despesas_periodo_salario">Pagamento</string>
+    <string name="despesas_periodo_vale">Vale</string>
+    <string name="despesas_renda_salario">Renda do pagamento</string>
+    <string name="despesas_renda_vale">Renda do vale</string>
+    <string name="despesas_total_despesas">Total de despesas</string>
+    <string name="despesas_subtotal">Subtotal</string>
+    <string name="despesas_pagas_secao">Pagas (%1$d)</string>
+    <string name="despesas_pagas_mostrar">Mostrar despesas pagas</string>
+    <string name="despesas_pagas_ocultar">Ocultar despesas pagas</string>
     <string name="despesas_motivo_inativa">Inativa</string>
     <string name="despesas_motivo_encerrada">Parcelamento encerrado</string>
     <string name="despesas_motivo_inicia_em">Começa em %1$s</string>

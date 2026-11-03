@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
+import java.time.YearMonth
 
 @Dao
 interface CartaoDao {
@@ -44,4 +45,14 @@ interface CartaoDao {
 
     @Query("DELETE FROM compras_cartao WHERE id = :id")
     suspend fun excluirCompra(id: Long)
+
+    /** Meses gravados como "yyyy-MM", então a comparação textual respeita a ordem cronológica. */
+    @Query("SELECT * FROM pagamentos_fatura WHERE mes BETWEEN :de AND :ate")
+    fun observarPagamentosFatura(de: YearMonth, ate: YearMonth): Flow<List<PagamentoFaturaEntity>>
+
+    @Upsert
+    suspend fun salvarPagamentoFatura(pagamento: PagamentoFaturaEntity)
+
+    @Query("DELETE FROM pagamentos_fatura WHERE cartao_id = :cartaoId AND mes = :mes")
+    suspend fun excluirPagamentoFatura(cartaoId: Long, mes: YearMonth)
 }

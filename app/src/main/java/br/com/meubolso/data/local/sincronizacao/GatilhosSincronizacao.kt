@@ -24,6 +24,7 @@ object GatilhosSincronizacao {
         "despesas_fixas",
         "pagamentos_despesa",
         "compras_cartao",
+        "pagamentos_fatura",
         "listas_compra",
         "itens_lista_compra",
         "objetivos",

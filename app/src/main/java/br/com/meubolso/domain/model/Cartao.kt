@@ -69,3 +69,10 @@ data class Fatura(
     /** Depois do fechamento a fatura não recebe mais compras. */
     fun fechada(hoje: LocalDate): Boolean = !hoje.isBefore(fechamento)
 }
+
+/** Fatura do [mes] de referência marcada como paga. */
+data class PagamentoFatura(
+    val cartaoId: Long,
+    val mes: YearMonth,
+    val dataPagamento: LocalDate,
+)
